@@ -1,44 +1,72 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "./renderer/services/productApi";
 import type { Product } from "./renderer/types/product";
-import { createCart, addItem as addItemApi, getCart } from "./renderer/services/cartApi";
+import {
+  createCart,
+  addItem,
+  getCart,
+  updateItem,
+  removeItem,
+} from "./renderer/services/cartApi";
 
 function App() {
-
   const [cartUUID, setCartUUID] = useState<string | null>(null);
   const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
 
+  // 🆕 Init cart
   useEffect(() => {
     async function init() {
       const res = await createCart();
       setCartUUID(res.cart_uuid);
     }
-
     init();
   }, []);
 
-  const handleAddItem = async (p: Product) => {
-  if (!cartUUID) {
-    console.log("❌ cartUUID missing");
-    return;
-  }
-
-  console.log("➡️ Adding product:", p.product_uuid);
-
-  const res = await addItemApi(cartUUID, p.product_uuid);
-  console.log("🧾 addItem response:", res);
-
-  const updatedCart = await getCart(cartUUID);
-  console.log("🛒 cart response:", updatedCart);
-
-  setCartData(updatedCart);
-};
-
-  // 🔄 Load products from API
+  // 📦 Load products
   useEffect(() => {
     getProducts().then(setProducts);
   }, []);
+
+  // 🔁 Refresh cart
+  const refreshCart = async () => {
+    if (!cartUUID) return;
+    const updated = await getCart(cartUUID);
+    setCartData(updated);
+  };
+
+  // ➕ Add item
+  const handleAddItem = async (p: Product) => {
+    if (!cartUUID) return;
+
+    await addItem(cartUUID, p.product_uuid);
+    await refreshCart();
+  };
+
+  // ➕ Increase
+  const handleIncrease = async (item: any) => {
+    if (!cartUUID) return;
+
+    await addItem(cartUUID, item.product_uuid);
+    await refreshCart();
+  };
+
+  // ➖ Decrease
+  const handleDecrease = async (item: any) => {
+    if (!cartUUID) return;
+
+    const newQty = item.quantity - 1;
+
+    if (newQty <= 0) {
+      await removeItem(cartUUID, item.product_uuid);
+    } else {
+      await updateItem(cartUUID, item.product_uuid, {
+        quantity: newQty,
+      });
+    }
+
+    await refreshCart();
+  };
 
   return (
     <div className="flex h-screen">
@@ -69,30 +97,52 @@ function App() {
 
         <div className="space-y-2">
           {cartData?.cart?.items?.map((item: any) => (
-            <div key={item.product_uuid} className="border p-2">
-              <div className="flex justify-between">
-                <span>{item.product.name}</span>
+            <div
+              key={item.product_uuid}
+              className="border p-2 flex justify-between items-center"
+            >
+              <span>{item.product.name}</span>
+
+              <div className="flex items-center gap-2">
+
+                {/* ➖ */}
+                <button
+                  className="px-2 bg-red-500 text-white"
+                  onClick={() => handleDecrease(item)}
+                >
+                  -
+                </button>
+
                 <span>{item.quantity}</span>
+
+                {/* ➕ */}
+                <button
+                  className="px-2 bg-green-500 text-white"
+                  onClick={() => handleIncrease(item)}
+                >
+                  +
+                </button>
+
               </div>
             </div>
           ))}
         </div>
 
-        {/* Totals */}
+        {/* 💰 Totals */}
         <div className="mt-6 border-t pt-4 space-y-1">
           <div className="flex justify-between">
             <span>Total</span>
-            <span>₹{cartData?.summary?.total}</span>
+            <span>₹{cartData?.summary?.total || 0}</span>
           </div>
 
           <div className="flex justify-between">
             <span>Tax</span>
-            <span>₹{cartData?.summary?.tax}</span>
+            <span>₹{cartData?.summary?.tax || 0}</span>
           </div>
 
           <div className="flex justify-between font-bold text-lg">
             <span>Grand Total</span>
-            <span>₹{cartData?.summary?.grand_total}</span>
+            <span>₹{cartData?.summary?.grand_total || 0}</span>
           </div>
         </div>
       </div>

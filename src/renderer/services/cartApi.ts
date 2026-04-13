@@ -1,9 +1,11 @@
-import { apiPost, apiGet } from "./api";
+import { apiPost, apiGet, apiPut, apiDelete } from "./api";
 
+// 🆕 Create Cart
 export async function createCart() {
   return await apiPost("/carts", {});
 }
 
+// ➕ Add Item (increase also uses this)
 export async function addItem(cart_uuid: string, product_uuid: string) {
   return await apiPost(`/carts/${cart_uuid}/items`, {
     product_uuid,
@@ -11,6 +13,24 @@ export async function addItem(cart_uuid: string, product_uuid: string) {
   });
 }
 
+// 📥 Get Cart
 export async function getCart(cart_uuid: string) {
   return await apiGet(`/carts/${cart_uuid}`);
+}
+
+// ✏️ Update Item (quantity / price / discount)
+export async function updateItem(
+  cart_uuid: string,
+  product_uuid: string,
+  data: any
+) {
+  return await apiPut(`/carts/${cart_uuid}/items/${product_uuid}`, data);
+}
+
+// ❌ Remove Item
+export async function removeItem(
+  cart_uuid: string,
+  product_uuid: string
+) {
+  return await apiDelete(`/carts/${cart_uuid}/items/${product_uuid}`);
 }

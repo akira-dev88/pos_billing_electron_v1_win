@@ -1,36 +1,50 @@
 const BASE_URL = "http://127.0.0.1:8000/api";
 
-export async function apiPost(url: string, body: any) {
-  const token = localStorage.getItem("token");
-
-  console.log("🔐 TOKEN:", token);
-  console.log("📡 POST:", url);
-
-  const res = await fetch(BASE_URL + url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  const data = await res.json();
-  console.log("📥 RESPONSE:", data);
-
-  return data;
+function getToken() {
+  return localStorage.getItem("token");
 }
 
+// 🔧 Common headers
+function getHeaders() {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${getToken()}`,
+  };
+}
+
+// GET
 export async function apiGet(url: string) {
-  const token = localStorage.getItem("token");
-
   const res = await fetch(BASE_URL + url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
+    headers: getHeaders(),
   });
+  return res.json();
+}
 
+// POST
+export async function apiPost(url: string, data: any) {
+  const res = await fetch(BASE_URL + url, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+// PUT ✅
+export async function apiPut(url: string, data: any) {
+  const res = await fetch(BASE_URL + url, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+// DELETE ✅
+export async function apiDelete(url: string) {
+  const res = await fetch(BASE_URL + url, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
   return res.json();
 }
