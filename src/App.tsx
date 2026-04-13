@@ -1,45 +1,59 @@
-import { useState } from "react";
-import { login } from "./renderer/services/authApi";
+import { useEffect, useState } from "react";
+import { getProducts } from "./renderer/services/productApi";
+import { useCartStore } from "./renderer/store/cartStore";
+import type { Product } from "./renderer/types/product";
 
 function App() {
-  const [email, setEmail] = useState("john@example.com");
-  const [password, setPassword] = useState("123456");
+  const { items, addItem } = useCartStore();
+  const [products, setProducts] = useState<Product[]>([]);
 
-  const handleLogin = async () => {
-    const res = await login(email, password);
-    console.log(res);
-
-    if (res.token) {
-      alert("Login success ✅");
-    } else {
-      alert("Login failed ❌");
-    }
-  };
+  // 🔄 Load products from API
+  useEffect(() => {
+    getProducts().then(setProducts);
+  }, []);
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="p-6 border rounded w-80 space-y-3">
-        <h1 className="text-xl font-bold">Login</h1>
+    <div className="flex h-screen">
 
-        <input
-          className="w-full p-2 border"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      {/* LEFT - PRODUCTS */}
+      <div className="w-1/2 p-4 border-r">
+        <h1 className="text-xl font-bold mb-4">Products</h1>
 
-        <input
-          type="password"
-          className="w-full p-2 border"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="space-y-2">
+          {products.map((p) => (
+            <div
+              key={p.product_uuid}
+              className="p-3 border cursor-pointer hover:bg-gray-100"
+              onClick={() =>
+                addItem({
+                  product_uuid: p.product_uuid,
+                  name: p.name,
+                  price: p.price,
+                  gst_percent: p.gst_percent ?? 0, // 🔥 FIX
+                })
+              }
+            >
+              <div className="font-semibold">{p.name}</div>
+              <div className="text-sm text-gray-500">
+                ₹{p.price}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <button
-          className="w-full p-2 bg-blue-500 text-white"
-          onClick={handleLogin}
-        >
-          Login
-        </button>
+      {/* RIGHT - CART */}
+      <div className="w-1/2 p-4">
+        <h1 className="text-xl font-bold mb-4">Cart</h1>
+
+        <div className="space-y-2">
+          {items.map((item) => (
+            <div key={item.product_uuid} className="flex justify-between border p-2">
+              <span>{item.name}</span>
+              <span>{item.quantity}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
