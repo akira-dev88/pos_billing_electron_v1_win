@@ -9,7 +9,7 @@ import {
   removeItem,
 } from "./renderer/services/cartApi";
 
-import { checkoutCart } from "./renderer/services/saleApi";
+import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
 
 function App() {
   const [cartUUID, setCartUUID] = useState<string | null>(null);
@@ -21,6 +21,8 @@ function App() {
   ]);
 
   const [loading, setLoading] = useState(false);
+
+  const [invoiceData, setInvoiceData] = useState<any>(null);
 
   // Auto-fill first row
   useEffect(() => {
@@ -103,9 +105,15 @@ function App() {
 
       console.log("✅ Checkout success:", res);
 
+      // 🔥 IMPORTANT: get sale_uuid
+      const saleUUID = res.sale_uuid;
+
+      const invoice = await getInvoice(saleUUID);
+      setInvoiceData(invoice);
+
       alert("Payment successful");
 
-      // 🔄 Reset
+      // reset cart
       const newCart = await createCart();
       setCartUUID(newCart.cart_uuid);
       setCartData(null);
@@ -290,6 +298,66 @@ function App() {
 
         </div>
       </div>
+
+      {/* INVOICE MODAL */}
+      {invoiceData && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center">
+
+          <div className="bg-white p-6 w-[400px]">
+
+            <h2 className="text-xl font-bold mb-4 text-center">
+              {invoiceData?.shop?.name || "Shop"}
+            </h2>
+
+            <div className="text-sm text-center mb-2">
+              {invoiceData?.shop?.address}
+            </div>
+
+            <div className="text-sm text-center mb-4">
+              GSTIN: {invoiceData?.shop?.gstin}
+            </div>
+
+            <hr />
+
+            {/* Items */}
+            {invoiceData?.items?.map((item: any, i: number) => (
+              <div key={i} className="flex justify-between text-sm mt-2">
+                <span>{item.name} x{item.qty}</span>
+                <span>₹{item.total}</span>
+              </div>
+            ))}
+
+            <hr className="my-2" />
+
+            <div className="flex justify-between font-bold">
+              <span>Total</span>
+              <span>₹{invoiceData?.summary?.grand_total}</span>
+            </div>
+
+            <div className="mt-4 text-center text-xs">
+              Thank you! 🙏
+            </div>
+
+            {/* Buttons */}
+            <div className="mt-4 flex gap-2">
+              <button
+                className="w-full bg-blue-600 text-white p-2"
+                onClick={() => window.print()}
+              >
+                Print
+              </button>
+
+              <button
+                className="w-full bg-gray-400 text-white p-2"
+                onClick={() => setInvoiceData(null)}
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
