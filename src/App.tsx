@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "./renderer/services/productApi";
 import type { Product } from "./renderer/types/product";
+
 import {
   createCart,
   addItem,
@@ -119,6 +120,11 @@ function App() {
 
       const invoice = await getInvoice(saleUUID);
       setInvoiceData(invoice);
+
+      // ⏱ auto print after render
+      setTimeout(() => {
+        window.print();
+      }, 500);
 
       alert("Payment successful");
 
@@ -312,38 +318,52 @@ function App() {
       {invoiceData && (
         <div className="fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center">
 
-          <div className="bg-white p-6 w-[400px]">
+          <div className="bg-white p-4 w-[300px] text-sm font-mono">
 
-            <h2 className="text-xl font-bold mb-4 text-center">
-              {invoiceData?.shop?.name || "Shop"}
+            <h2 className="text-center font-bold">
+              {invoiceData?.shop?.name}
             </h2>
 
-            <div className="text-sm text-center mb-2">
+            <div className="text-center text-xs">
               {invoiceData?.shop?.address}
             </div>
 
-            <div className="text-sm text-center mb-4">
+            <div className="text-center text-xs mb-2">
               GSTIN: {invoiceData?.shop?.gstin}
             </div>
 
-            <hr />
+            <hr className="my-2" />
 
             {/* Items */}
             {invoiceData?.items?.map((item: any, i: number) => (
-              <div key={i} className="flex justify-between text-sm mt-2">
-                <span>{item.name} x{item.qty}</span>
+              <div key={i} className="flex justify-between text-xs">
+                <span>
+                  {item.name} x{item.qty}
+                </span>
                 <span>₹{item.total}</span>
               </div>
             ))}
 
             <hr className="my-2" />
 
-            <div className="flex justify-between font-bold">
+            <div className="flex justify-between text-xs">
               <span>Total</span>
+              <span>₹{invoiceData?.summary?.total}</span>
+            </div>
+
+            <div className="flex justify-between text-xs">
+              <span>GST</span>
+              <span>₹{invoiceData?.summary?.tax}</span>
+            </div>
+
+            <div className="flex justify-between font-bold">
+              <span>Grand Total</span>
               <span>₹{invoiceData?.summary?.grand_total}</span>
             </div>
 
-            <div className="mt-4 text-center text-xs">
+            <hr className="my-2" />
+
+            <div className="text-center text-xs">
               Thank you! 🙏
             </div>
 
