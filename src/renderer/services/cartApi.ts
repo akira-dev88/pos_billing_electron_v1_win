@@ -34,3 +34,9 @@ export async function removeItem(
 ) {
   return await apiDelete(`/carts/${cart_uuid}/items/${product_uuid}`);
 }
+
+export async function applyDiscount(cart_uuid: string, discount: number) {
+  return await apiPost(`/carts/${cart_uuid}/discount`, {
+    discount,
+  });
+}

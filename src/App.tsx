@@ -8,9 +8,11 @@ import {
   getCart,
   updateItem,
   removeItem,
+  applyDiscount,
 } from "./renderer/services/cartApi";
 
 import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
+import { getCustomers } from "./renderer/services/customerApi";
 
 function App() {
 
@@ -103,7 +105,7 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await checkoutCart(cartUUID, payments);
+      const res = await checkoutCart(cartUUID, payments, selectedCustomer);
 
       console.log("🔥 FULL CHECKOUT RESPONSE:", res);
 
@@ -162,6 +164,22 @@ function App() {
   const grandTotal = Number(cartData?.summary?.grand_total || 0);
 
   const balance = totalPaid - grandTotal;
+
+  const [discount, setDiscount] = useState(0);
+
+  const handleApplyDiscount = async () => {
+    if (!cartUUID) return;
+
+    await applyDiscount(cartUUID, discount);
+    await refreshCart();
+  };
+
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCustomers().then(setCustomers);
+  }, []);
 
   return (
     <div className="flex h-screen">
@@ -241,6 +259,46 @@ function App() {
           </div>
         </div>
 
+        <div className="mt-6 border-t pt-4">
+          <h2 className="font-semibold">Customer</h2>
+
+          <select
+            className="w-full border p-2 mt-2"
+            value={selectedCustomer || ""}
+            onChange={(e) => setSelectedCustomer(e.target.value)}
+          >
+            <option value="">Walk-in Customer</option>
+
+            {customers.map((c) => (
+              <option key={c.customer_uuid} value={c.customer_uuid}>
+                {c.name} ({c.mobile})
+              </option>
+            ))}
+          </select>
+        </div>
+
+
+      <div className="mt-4 border-t pt-4">
+        <h2 className="font-semibold">Discount</h2>
+
+        <div className="flex gap-2 mt-2">
+          <input
+            type="number"
+            className="border p-2 w-full"
+            placeholder="Enter discount"
+            value={discount}
+            onChange={(e) => setDiscount(Number(e.target.value))}
+          />
+
+          <button
+            className="bg-blue-600 text-white px-4"
+            onClick={handleApplyDiscount}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+      
         <div className="mt-6 border-t pt-4 space-y-3">
 
           <h2 className="font-semibold">Payments</h2>
