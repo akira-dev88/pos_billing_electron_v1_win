@@ -12,7 +12,7 @@ import {
 } from "./renderer/services/cartApi";
 
 import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
-import { getCustomers } from "./renderer/services/customerApi";
+import { createCustomer, getCustomers } from "./renderer/services/customerApi";
 
 function App() {
 
@@ -105,7 +105,11 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await checkoutCart(cartUUID, payments, selectedCustomer);
+      const res = await checkoutCart(
+        cartUUID,
+        payments,
+        selectedCustomer?.customer_uuid || null
+      );
 
       console.log("🔥 FULL CHECKOUT RESPONSE:", res);
 
@@ -175,7 +179,14 @@ function App() {
   };
 
   const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    mobile: "",
+  });
 
   useEffect(() => {
     getCustomers().then(setCustomers);
@@ -260,12 +271,19 @@ function App() {
         </div>
 
         <div className="mt-6 border-t pt-4">
+
           <h2 className="font-semibold">Customer</h2>
 
+          {/* Select */}
           <select
             className="w-full border p-2 mt-2"
-            value={selectedCustomer || ""}
-            onChange={(e) => setSelectedCustomer(e.target.value)}
+            value={selectedCustomer?.customer_uuid || ""}
+            onChange={(e) => {
+              const c = customers.find(
+                (x) => x.customer_uuid === e.target.value
+              );
+              setSelectedCustomer(c || null);
+            }}
           >
             <option value="">Walk-in Customer</option>
 
@@ -275,30 +293,48 @@ function App() {
               </option>
             ))}
           </select>
-        </div>
 
-
-      <div className="mt-4 border-t pt-4">
-        <h2 className="font-semibold">Discount</h2>
-
-        <div className="flex gap-2 mt-2">
-          <input
-            type="number"
-            className="border p-2 w-full"
-            placeholder="Enter discount"
-            value={discount}
-            onChange={(e) => setDiscount(Number(e.target.value))}
-          />
-
+          {/* Add new */}
           <button
-            className="bg-blue-600 text-white px-4"
-            onClick={handleApplyDiscount}
+            className="text-blue-600 text-sm mt-2"
+            onClick={() => setShowCustomerModal(true)}
           >
-            Apply
+            + Add Customer
           </button>
+
+          {/* Selected info */}
+          {selectedCustomer && (
+            <div className="mt-2 text-sm bg-gray-100 p-2">
+              <div><b>{selectedCustomer.name}</b></div>
+              <div>📞 {selectedCustomer.mobile}</div>
+              <div>💰 Balance: ₹{selectedCustomer.credit_balance || 0}</div>
+            </div>
+          )}
+
         </div>
-      </div>
-      
+
+
+        <div className="mt-4 border-t pt-4">
+          <h2 className="font-semibold">Discount</h2>
+
+          <div className="flex gap-2 mt-2">
+            <input
+              type="number"
+              className="border p-2 w-full"
+              placeholder="Enter discount"
+              value={discount}
+              onChange={(e) => setDiscount(Number(e.target.value))}
+            />
+
+            <button
+              className="bg-blue-600 text-white px-4"
+              onClick={handleApplyDiscount}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+
         <div className="mt-6 border-t pt-4 space-y-3">
 
           <h2 className="font-semibold">Payments</h2>
@@ -439,6 +475,59 @@ function App() {
                 onClick={() => setInvoiceData(null)}
               >
                 Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {showCustomerModal && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center">
+
+          <div className="bg-white p-6 w-[300px]">
+
+            <h2 className="font-bold mb-4">New Customer</h2>
+
+            <input
+              className="w-full border p-2 mb-2"
+              placeholder="Name"
+              value={newCustomer.name}
+              onChange={(e) =>
+                setNewCustomer({ ...newCustomer, name: e.target.value })
+              }
+            />
+
+            <input
+              className="w-full border p-2 mb-4"
+              placeholder="Mobile"
+              value={newCustomer.mobile}
+              onChange={(e) =>
+                setNewCustomer({ ...newCustomer, mobile: e.target.value })
+              }
+            />
+
+            <div className="flex gap-2">
+              <button
+                className="w-full bg-green-600 text-white p-2"
+                onClick={async () => {
+                  const c = await createCustomer(newCustomer);
+
+                  setCustomers((prev) => [...prev, c]);
+                  setSelectedCustomer(c);
+
+                  setNewCustomer({ name: "", mobile: "" });
+                  setShowCustomerModal(false);
+                }}
+              >
+                Save
+              </button>
+
+              <button
+                className="w-full bg-gray-400 text-white p-2"
+                onClick={() => setShowCustomerModal(false)}
+              >
+                Cancel
               </button>
             </div>
 
