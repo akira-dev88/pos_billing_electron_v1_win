@@ -9,10 +9,15 @@ import {
   removeItem,
 } from "./renderer/services/cartApi";
 
+import { checkoutCart } from "./renderer/services/saleApi";
+
 function App() {
   const [cartUUID, setCartUUID] = useState<string | null>(null);
   const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
+
+  const [cash, setCash] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   // 🆕 Init cart
   useEffect(() => {
@@ -66,6 +71,41 @@ function App() {
     }
 
     await refreshCart();
+  };
+
+  const handleCheckout = async () => {
+    if (!cartUUID || !cartData) return;
+
+    const grandTotal = Number(cartData.summary.grand_total);
+
+    if (cash < grandTotal) {
+      alert("Insufficient payment");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await checkoutCart(cartUUID, [
+        { method: "cash", amount: cash },
+      ]);
+
+      console.log("✅ Checkout success:", res);
+
+      alert("Payment successful");
+
+      // 🔄 Reset cart
+      const newCart = await createCart();
+      setCartUUID(newCart.cart_uuid);
+      setCartData(null);
+      setCash(0);
+
+    } catch (err) {
+      console.error(err);
+      alert("Checkout failed");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -144,6 +184,37 @@ function App() {
             <span>Grand Total</span>
             <span>₹{cartData?.summary?.grand_total || 0}</span>
           </div>
+        </div>
+
+        <div className="mt-6 border-t pt-4 space-y-3">
+
+          {/* Payment input */}
+          <input
+            type="number"
+            placeholder="Enter cash amount"
+            className="w-full p-2 border"
+            value={cash}
+            onChange={(e) => setCash(Number(e.target.value))}
+            onFocus={() => setCash(cartData?.summary?.grand_total || 0)}
+          />
+
+          {/* Change */}
+          <div className="flex justify-between">
+            <span>Change</span>
+            <span>
+              ₹{Math.max(0, cash - (cartData?.summary?.grand_total || 0))}
+            </span>
+          </div>
+
+          {/* Checkout button */}
+          <button
+            className="w-full bg-green-600 text-white p-3 font-bold"
+            onClick={handleCheckout}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Checkout"}
+          </button>
+
         </div>
       </div>
     </div>
