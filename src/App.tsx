@@ -11,7 +11,7 @@ import {
   applyDiscount,
 } from "./renderer/services/cartApi";
 
-import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
+import { checkoutCart, getInvoice, getSales } from "./renderer/services/saleApi";
 import { addCustomerPayment, createCustomer, getCustomers, getLedger } from "./renderer/services/customerApi";
 
 function App() {
@@ -223,9 +223,28 @@ function App() {
     setPaymentAmount(0);
   };
 
+  const [sales, setSales] = useState<any[]>([]);
+  const [showSales, setShowSales] = useState(false);
+
+  const loadSales = async () => {
+    const data = await getSales();
+    setSales(data);
+  };
+
   return (
     <div className="flex h-screen">
 
+
+      <button
+        className="bg-black text-white px-3 py-1"
+        onClick={() => {
+          loadSales();
+          setShowSales(true);
+        }}
+      >
+        Sales
+      </button>
+      
       {/* LEFT - PRODUCTS */}
       <div className="w-1/2 p-4 border-r">
         <h1 className="text-xl font-bold mb-4">Products</h1>
@@ -244,12 +263,14 @@ function App() {
             </div>
           ))}
         </div>
+        
       </div>
 
+
       {/* RIGHT - CART */}
+
       <div className="w-1/2 p-4">
         <h1 className="text-xl font-bold mb-4">Cart</h1>
-
         <div className="space-y-2">
           {cartData?.cart?.items?.map((item: any) => (
             <div
@@ -516,6 +537,7 @@ function App() {
         </div>
       </div>
 
+
       {/* INVOICE MODAL */}
       {invoiceData && (
         <div className="fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center">
@@ -642,8 +664,55 @@ function App() {
           </div>
         </div>
       )}
+
+      {showSales && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center">
+
+          <div className="bg-white p-4 w-[500px] max-h-[80vh] overflow-y-auto">
+
+            <h2 className="text-lg font-bold mb-4">Sales History</h2>
+
+            {sales.map((sale) => (
+              <div
+                key={sale.sale_uuid}
+                className="border p-2 mb-2 flex justify-between items-center"
+              >
+                <div>
+                  <div className="font-semibold">{sale.invoice_number}</div>
+                  <div className="text-sm text-gray-500">
+                    ₹{sale.grand_total}
+                  </div>
+                </div>
+
+                <button
+                  className="bg-blue-600 text-white px-2 py-1"
+                  onClick={async () => {
+                    const invoice = await getInvoice(sale.sale_uuid);
+                    setInvoiceData(invoice);
+                    setShowSales(false);
+
+                    setTimeout(() => window.print(), 500);
+                  }}
+                >
+                  View / Print
+                </button>
+              </div>
+            ))}
+
+            <button
+              className="w-full mt-4 bg-gray-400 text-white p-2"
+              onClick={() => setShowSales(false)}
+            >
+              Close
+            </button>
+
+          </div>
+        </div>
+      )}
     </div>
   );
+
+
 }
 
 export default App;

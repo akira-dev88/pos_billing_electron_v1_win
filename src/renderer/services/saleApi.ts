@@ -14,3 +14,7 @@ export async function checkoutCart(
 export async function getInvoice(sale_uuid: string) {
   return await apiGet(`/sales/${sale_uuid}/invoice`);
 }
+
+export async function getSales() {
+  return await apiGet("/sales");
+}
