@@ -16,8 +16,23 @@ function App() {
   const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
 
-  const [cash, setCash] = useState(0);
+  const [payments, setPayments] = useState([
+    { method: "cash", amount: 0 },
+  ]);
+
   const [loading, setLoading] = useState(false);
+
+  // Auto-fill first row
+  useEffect(() => {
+    if (cartData?.summary?.grand_total) {
+      setPayments([
+        {
+          method: "cash",
+          amount: Number(cartData.summary.grand_total),
+        },
+      ]);
+    }
+  }, [cartData]);
 
   // 🆕 Init cart
   useEffect(() => {
@@ -76,9 +91,7 @@ function App() {
   const handleCheckout = async () => {
     if (!cartUUID || !cartData) return;
 
-    const grandTotal = Number(cartData.summary.grand_total);
-
-    if (cash < grandTotal) {
+    if (totalPaid < grandTotal) {
       alert("Insufficient payment");
       return;
     }
@@ -86,19 +99,17 @@ function App() {
     setLoading(true);
 
     try {
-      const res = await checkoutCart(cartUUID, [
-        { method: "cash", amount: cash },
-      ]);
+      const res = await checkoutCart(cartUUID, payments);
 
       console.log("✅ Checkout success:", res);
 
       alert("Payment successful");
 
-      // 🔄 Reset cart
+      // 🔄 Reset
       const newCart = await createCart();
       setCartUUID(newCart.cart_uuid);
       setCartData(null);
-      setCash(0);
+      setPayments([{ method: "cash", amount: 0 }]);
 
     } catch (err) {
       console.error(err);
@@ -107,6 +118,27 @@ function App() {
 
     setLoading(false);
   };
+
+  const updatePayment = (index: number, field: string, value: any) => {
+    const updated = [...payments];
+    updated[index] = { ...updated[index], [field]: value };
+    setPayments(updated);
+  };
+
+  const addPaymentRow = () => {
+    setPayments([...payments, { method: "upi", amount: 0 }]);
+  };
+
+  const removePaymentRow = (index: number) => {
+    const updated = payments.filter((_, i) => i !== index);
+    setPayments(updated);
+  };
+
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const grandTotal = Number(cartData?.summary?.grand_total || 0);
+
+  const balance = totalPaid - grandTotal;
 
   return (
     <div className="flex h-screen">
@@ -188,25 +220,66 @@ function App() {
 
         <div className="mt-6 border-t pt-4 space-y-3">
 
-          {/* Payment input */}
-          <input
-            type="number"
-            placeholder="Enter cash amount"
-            className="w-full p-2 border"
-            value={cash}
-            onChange={(e) => setCash(Number(e.target.value))}
-            onFocus={() => setCash(cartData?.summary?.grand_total || 0)}
-          />
+          <h2 className="font-semibold">Payments</h2>
 
-          {/* Change */}
+          {payments.map((p, index) => (
+            <div key={index} className="flex gap-2 items-center">
+
+              {/* Method */}
+              <select
+                className="border p-2"
+                value={p.method}
+                onChange={(e) => updatePayment(index, "method", e.target.value)}
+              >
+                <option value="cash">Cash</option>
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+              </select>
+
+              {/* Amount */}
+              <input
+                type="number"
+                className="border p-2 w-full"
+                value={p.amount}
+                onChange={(e) =>
+                  updatePayment(index, "amount", Number(e.target.value))
+                }
+              />
+
+              {/* Remove */}
+              {payments.length > 1 && (
+                <button
+                  className="px-2 bg-red-500 text-white"
+                  onClick={() => removePaymentRow(index)}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Add Payment */}
+          <button
+            className="text-blue-600 text-sm"
+            onClick={addPaymentRow}
+          >
+            + Add Payment
+          </button>
+
+          {/* Summary */}
           <div className="flex justify-between">
-            <span>Change</span>
-            <span>
-              ₹{Math.max(0, cash - (cartData?.summary?.grand_total || 0))}
+            <span>Paid</span>
+            <span>₹{totalPaid}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Balance</span>
+            <span className={balance < 0 ? "text-red-500" : "text-green-600"}>
+              ₹{balance}
             </span>
           </div>
 
-          {/* Checkout button */}
+          {/* Checkout */}
           <button
             className="w-full bg-green-600 text-white p-3 font-bold"
             onClick={handleCheckout}
