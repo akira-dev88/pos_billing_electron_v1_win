@@ -12,6 +12,7 @@ import {
 import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
 
 function App() {
+
   const [cartUUID, setCartUUID] = useState<string | null>(null);
   const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -103,10 +104,18 @@ function App() {
     try {
       const res = await checkoutCart(cartUUID, payments);
 
+      console.log("🔥 FULL CHECKOUT RESPONSE:", res);
+
       console.log("✅ Checkout success:", res);
 
       // 🔥 IMPORTANT: get sale_uuid
-      const saleUUID = res.sale_uuid;
+      const saleUUID = res.sale?.sale_uuid;
+
+      if (!saleUUID) {
+        console.error("❌ sale_uuid missing", res);
+        alert("Invoice failed");
+        return;
+      }
 
       const invoice = await getInvoice(saleUUID);
       setInvoiceData(invoice);
