@@ -12,7 +12,7 @@ import {
 } from "./renderer/services/cartApi";
 
 import { checkoutCart, getInvoice } from "./renderer/services/saleApi";
-import { createCustomer, getCustomers } from "./renderer/services/customerApi";
+import { addCustomerPayment, createCustomer, getCustomers, getLedger } from "./renderer/services/customerApi";
 
 function App() {
 
@@ -188,9 +188,35 @@ function App() {
     mobile: "",
   });
 
+  const [ledger, setLedger] = useState<any[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
   useEffect(() => {
     getCustomers().then(setCustomers);
   }, []);
+
+  const handleSelectCustomer = async (c: any) => {
+    setSelectedCustomer(c);
+
+    const data = await getLedger(c.customer_uuid);
+    setLedger(data);
+  };
+
+  const handleCustomerPayment = async () => {
+    if (!selectedCustomer) return;
+
+    await addCustomerPayment(selectedCustomer.customer_uuid, {
+      amount: paymentAmount,
+      method: paymentMethod,
+    });
+
+    // refresh ledger
+    const data = await getLedger(selectedCustomer.customer_uuid);
+    setLedger(data);
+
+    setPaymentAmount(0);
+  };
 
   return (
     <div className="flex h-screen">
@@ -313,6 +339,56 @@ function App() {
 
         </div>
 
+        {selectedCustomer && (
+          <div className="mt-4 border p-3">
+
+            <h3 className="font-bold mb-2">Ledger</h3>
+
+            {/* Ledger List */}
+            <div className="space-y-1 max-h-40 overflow-y-auto">
+              {ledger.map((entry, i) => (
+                <div key={i} className="flex justify-between text-sm border-b pb-1">
+                  <span>{entry.type}</span>
+                  <span>₹{entry.amount}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Payment Entry */}
+            <div className="mt-3 space-y-2">
+
+              <h4 className="font-semibold">Add Payment</h4>
+
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  className="border p-2 w-full"
+                  placeholder="Amount"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                />
+
+                <select
+                  className="border p-2"
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="card">Card</option>
+                </select>
+              </div>
+
+              <button
+                className="w-full bg-blue-600 text-white p-2"
+                onClick={handleCustomerPayment}
+              >
+                Add Payment
+              </button>
+            </div>
+
+          </div>
+        )}
 
         <div className="mt-4 border-t pt-4">
           <h2 className="font-semibold">Discount</h2>

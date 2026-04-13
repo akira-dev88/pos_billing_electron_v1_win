@@ -4,14 +4,11 @@ export async function getCustomers() {
   return await apiGet("/customers");
 }
 
-export async function createCustomer(data: {
-  name: string;
-  mobile?: string;
-}) {
+export async function createCustomer(data: any) {
   return await apiPost("/customers", data);
 }
 
-export async function getCustomerLedger(customer_uuid: string) {
+export async function getLedger(customer_uuid: string) {
   return await apiGet(`/customers/${customer_uuid}/ledger`);
 }
 
