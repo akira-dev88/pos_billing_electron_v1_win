@@ -1,40 +1,45 @@
-import { useCartStore } from "./renderer/store/cartStore";
+import { useState } from "react";
+import { login } from "./renderer/services/authApi";
 
 function App() {
-  const { items, addItem } = useCartStore();
+  const [email, setEmail] = useState("john@example.com");
+  const [password, setPassword] = useState("123456");
 
-  const mockProduct = {
-    product_uuid: "1",
-    name: "Milk",
-    price: 50,
-    gst_percent: 5,
+  const handleLogin = async () => {
+    const res = await login(email, password);
+    console.log(res);
+
+    if (res.token) {
+      alert("Login success ✅");
+    } else {
+      alert("Login failed ❌");
+    }
   };
 
   return (
-    <div className="flex h-screen">
-      
-      {/* LEFT - Products */}
-      <div className="w-1/2 p-4 border-r">
-        <h1 className="text-xl font-bold mb-4">Products</h1>
+    <div className="flex items-center justify-center h-screen">
+      <div className="p-6 border rounded w-80 space-y-3">
+        <h1 className="text-xl font-bold">Login</h1>
+
+        <input
+          className="w-full p-2 border"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          className="w-full p-2 border"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
         <button
-          className="p-4 bg-blue-500 text-white"
-          onClick={() => addItem(mockProduct)}
+          className="w-full p-2 bg-blue-500 text-white"
+          onClick={handleLogin}
         >
-          Add Milk
+          Login
         </button>
-      </div>
-
-      {/* RIGHT - Cart */}
-      <div className="w-1/2 p-4">
-        <h1 className="text-xl font-bold mb-4">Cart</h1>
-
-        {items.map((item: any) => (
-          <div key={item.product_uuid} className="flex justify-between">
-            <span>{item.name}</span>
-            <span>{item.quantity}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
