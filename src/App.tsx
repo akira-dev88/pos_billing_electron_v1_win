@@ -31,12 +31,17 @@ function App() {
   // Auto-fill first row
   useEffect(() => {
     if (cartData?.summary?.grand_total) {
-      setPayments([
-        {
-          method: "cash",
-          amount: Number(cartData.summary.grand_total),
-        },
-      ]);
+      setPayments((prev) => {
+        if (prev.length === 1 && prev[0].amount === 0) {
+          return [
+            {
+              method: "cash",
+              amount: Number(cartData.summary.grand_total),
+            },
+          ];
+        }
+        return prev;
+      });
     }
   }, [cartData]);
 
@@ -97,8 +102,8 @@ function App() {
   const handleCheckout = async () => {
     if (!cartUUID || !cartData) return;
 
-    if (totalPaid < grandTotal) {
-      alert("Insufficient payment");
+    if (totalPaid < grandTotal && !selectedCustomer) {
+      alert("Select customer for credit sale");
       return;
     }
 
@@ -459,6 +464,26 @@ function App() {
             + Add Payment
           </button>
 
+          <div className="flex gap-2 mt-2">
+            <button
+              className="bg-gray-300 px-2"
+              onClick={() => setPayments([{ method: "cash", amount: 0 }])}
+            >
+              Full Credit
+            </button>
+
+            <button
+              className="bg-gray-300 px-2"
+              onClick={() =>
+                setPayments([
+                  { method: "cash", amount: grandTotal / 2 },
+                ])
+              }
+            >
+              50%
+            </button>
+          </div>
+
           {/* Summary */}
           <div className="flex justify-between">
             <span>Paid</span>
@@ -469,6 +494,13 @@ function App() {
             <span>Balance</span>
             <span className={balance < 0 ? "text-red-500" : "text-green-600"}>
               ₹{balance}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Status</span>
+            <span className={balance < 0 ? "text-red-500" : "text-green-600"}>
+              {balance < 0 ? "Credit Sale" : "Paid"}
             </span>
           </div>
 
