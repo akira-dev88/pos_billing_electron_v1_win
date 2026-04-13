@@ -1,13 +1,39 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "./renderer/services/productApi";
-import { useCartStore } from "./renderer/store/cartStore";
 import type { Product } from "./renderer/types/product";
-import { useCartTotals } from "./renderer/hooks/useCartTotals";
+import { createCart, addItem as addItemApi, getCart } from "./renderer/services/cartApi";
 
 function App() {
-  const { items, addItem, removeItem, increaseQty, decreaseQty } = useCartStore();
-  const totals = useCartTotals();
+
+  const [cartUUID, setCartUUID] = useState<string | null>(null);
+  const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function init() {
+      const res = await createCart();
+      setCartUUID(res.cart_uuid);
+    }
+
+    init();
+  }, []);
+
+  const handleAddItem = async (p: Product) => {
+  if (!cartUUID) {
+    console.log("❌ cartUUID missing");
+    return;
+  }
+
+  console.log("➡️ Adding product:", p.product_uuid);
+
+  const res = await addItemApi(cartUUID, p.product_uuid);
+  console.log("🧾 addItem response:", res);
+
+  const updatedCart = await getCart(cartUUID);
+  console.log("🛒 cart response:", updatedCart);
+
+  setCartData(updatedCart);
+};
 
   // 🔄 Load products from API
   useEffect(() => {
@@ -26,14 +52,7 @@ function App() {
             <div
               key={p.product_uuid}
               className="p-3 border cursor-pointer hover:bg-gray-100"
-              onClick={() =>
-                addItem({
-                  product_uuid: p.product_uuid,
-                  name: p.name,
-                  price: p.price,
-                  gst_percent: p.gst_percent ?? 0, // 🔥 FIX
-                })
-              }
+              onClick={() => handleAddItem(p)}
             >
               <div className="font-semibold">{p.name}</div>
               <div className="text-sm text-gray-500">
@@ -49,24 +68,12 @@ function App() {
         <h1 className="text-xl font-bold mb-4">Cart</h1>
 
         <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.product_uuid} className="border p-2 space-y-1">
-
+          {cartData?.cart?.items?.map((item: any) => (
+            <div key={item.product_uuid} className="border p-2">
               <div className="flex justify-between">
-                <span>{item.name}</span>
-                <button onClick={() => removeItem(item.product_uuid)}>❌</button>
+                <span>{item.product.name}</span>
+                <span>{item.quantity}</span>
               </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  <button onClick={() => decreaseQty(item.product_uuid)}>-</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => increaseQty(item.product_uuid)}>+</button>
-                </div>
-
-                <span>₹{item.price * item.quantity}</span>
-              </div>
-
             </div>
           ))}
         </div>
@@ -75,17 +82,17 @@ function App() {
         <div className="mt-6 border-t pt-4 space-y-1">
           <div className="flex justify-between">
             <span>Total</span>
-            <span>₹{totals.total}</span>
+            <span>₹{cartData?.summary?.total}</span>
           </div>
 
           <div className="flex justify-between">
             <span>Tax</span>
-            <span>₹{totals.tax}</span>
+            <span>₹{cartData?.summary?.tax}</span>
           </div>
 
           <div className="flex justify-between font-bold text-lg">
             <span>Grand Total</span>
-            <span>₹{totals.grand_total}</span>
+            <span>₹{cartData?.summary?.grand_total}</span>
           </div>
         </div>
       </div>
