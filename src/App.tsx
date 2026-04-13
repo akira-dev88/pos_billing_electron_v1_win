@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { getProducts } from "./renderer/services/productApi";
 import { useCartStore } from "./renderer/store/cartStore";
 import type { Product } from "./renderer/types/product";
+import { useCartTotals } from "./renderer/hooks/useCartTotals";
 
 function App() {
-  const { items, addItem } = useCartStore();
+  const { items, addItem, removeItem, increaseQty, decreaseQty } = useCartStore();
+  const totals = useCartTotals();
   const [products, setProducts] = useState<Product[]>([]);
 
   // 🔄 Load products from API
@@ -48,11 +50,43 @@ function App() {
 
         <div className="space-y-2">
           {items.map((item) => (
-            <div key={item.product_uuid} className="flex justify-between border p-2">
-              <span>{item.name}</span>
-              <span>{item.quantity}</span>
+            <div key={item.product_uuid} className="border p-2 space-y-1">
+
+              <div className="flex justify-between">
+                <span>{item.name}</span>
+                <button onClick={() => removeItem(item.product_uuid)}>❌</button>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                  <button onClick={() => decreaseQty(item.product_uuid)}>-</button>
+                  <span>{item.quantity}</span>
+                  <button onClick={() => increaseQty(item.product_uuid)}>+</button>
+                </div>
+
+                <span>₹{item.price * item.quantity}</span>
+              </div>
+
             </div>
           ))}
+        </div>
+
+        {/* Totals */}
+        <div className="mt-6 border-t pt-4 space-y-1">
+          <div className="flex justify-between">
+            <span>Total</span>
+            <span>₹{totals.total}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Tax</span>
+            <span>₹{totals.tax}</span>
+          </div>
+
+          <div className="flex justify-between font-bold text-lg">
+            <span>Grand Total</span>
+            <span>₹{totals.grand_total}</span>
+          </div>
         </div>
       </div>
     </div>

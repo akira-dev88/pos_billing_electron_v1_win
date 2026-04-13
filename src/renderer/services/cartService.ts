@@ -1,26 +1,18 @@
-export function calculateCart(items: any[], billDiscount = 0) {
+export function calculateCart(items: any[]) {
   let total = 0;
-  let taxTotal = 0;
-  let itemDiscountTotal = 0;
+  let tax = 0;
 
-  for (const item of items) {
+  items.forEach((item) => {
     const base = item.price * item.quantity;
-    const discount = item.discount || 0;
-    const net = base - discount;
-    const tax = (net * item.tax_percent) / 100;
+    const taxAmount = (base * item.gst_percent) / 100;
 
     total += base;
-    itemDiscountTotal += discount;
-    taxTotal += tax;
-  }
-
-  const grandTotal = total - itemDiscountTotal - billDiscount + taxTotal;
+    tax += taxAmount;
+  });
 
   return {
     total,
-    item_discount: itemDiscountTotal,
-    bill_discount: billDiscount,
-    tax: taxTotal,
-    grand_total: grandTotal,
+    tax,
+    grand_total: total + tax,
   };
 }
