@@ -4,11 +4,14 @@ import './index.css';
 import App from './App.tsx';
 import { HashRouter } from 'react-router-dom';
 
-// Use createRoot directly without the "ReactDOM." prefix
-createRoot(document.getElementById('root')!).render(
+import { AuthProvider } from "./context/AuthContext";
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <HashRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </HashRouter>
   </StrictMode>
 );
