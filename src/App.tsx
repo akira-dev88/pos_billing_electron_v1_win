@@ -1,59 +1,73 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import POS from "./pages/pos/POSPage";
 import Dashboard from "./pages/admin/Dashboard";
+
+// 👇 create empty pages for now
+import Products from "./pages/admin/Products";
+import Reports from "./pages/admin/Reports";
+import Sales from "./pages/admin/Sales";
+import Stock from "./pages/admin/Stock";
+import Staff from "./pages/admin/Staff";
+import Settings from "./pages/admin/Settings";
+
+import POSLayout from "./layout/POSLayout";
 import AdminLayout from "./layout/AdminLayout";
 
-  function RouteLogger() {
-    const location = useLocation();
-
-    console.log("📍 Current Route:", location.pathname);
-
-    return (
-      <div className="fixed top-0 right-0 bg-black text-white text-xs p-1 z-50">
-        {location.pathname}
-      </div>
-    );
-  }
-  
 function App() {
-
-  
   return (
     <Routes>
-      {/* Default */}
+
       <Route path="/" element={<Navigate to="/pos" />} />
 
       {/* POS */}
-      <Route path="/pos" element={<POS />} />
+      <Route
+        path="/pos"
+        element={
+          <POSLayout>
+            <POS />
+          </POSLayout>
+        }
+      />
 
-      {/* ADMIN (Nested Routes) */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* ADMIN */}
+      <Route
+        path="/admin/dashboard"
+        element={<AdminLayout><Dashboard /></AdminLayout>}
+      />
 
-        <Route path="dashboard" element={<Dashboard />} />
+      <Route
+        path="/admin/products"
+        element={<AdminLayout><Products /></AdminLayout>}
+      />
 
-        {/* Placeholder pages for now */}
-        <Route path="reports" element={<div>Reports</div>} />
-        <Route path="products" element={<div>Products</div>} />
-        <Route path="stock" element={<div>Stock</div>} />
-        <Route path="sales" element={<div>Sales</div>} />
-        <Route path="staff" element={<div>Staff</div>} />
-        <Route path="settings" element={<div>Settings</div>} />
+      <Route
+        path="/admin/reports"
+        element={<AdminLayout><Reports /></AdminLayout>}
+      />
 
-      </Route>
+      <Route
+        path="/admin/sales"
+        element={<AdminLayout><Sales /></AdminLayout>}
+      />
 
-      <Route path="/" element={<Navigate to="/pos" />} />
+      <Route
+        path="/admin/stock"
+        element={<AdminLayout><Stock /></AdminLayout>}
+      />
 
-        <Route path="/pos" element={<POS />} />
+      <Route
+        path="/admin/staff"
+        element={<AdminLayout><Staff /></AdminLayout>}
+      />
 
-        <Route path="/admin/dashboard" element={<Dashboard />} />
+      <Route
+        path="/admin/settings"
+        element={<AdminLayout><Settings /></AdminLayout>}
+      />
 
     </Routes>
-
-    
   );
 }
-
-
 
 export default App;
