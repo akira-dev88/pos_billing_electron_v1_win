@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Topbar from "../components/Topbar";
 
 function NavItem({
   label,
@@ -18,11 +19,10 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2 rounded transition ${
-        active
+      className={`w-full text-left px-3 py-2 rounded transition ${active
           ? "bg-blue-600 text-white"
           : "text-gray-300 hover:bg-gray-800"
-      }`}
+        }`}
     >
       {label}
     </button>
@@ -149,8 +149,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* 📄 Content */}
-      <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
-        {children}
+      <div className="flex-1 flex flex-col bg-gray-100">
+
+        {/* 🔝 Topbar */}
+        <Topbar />
+
+        {/* 📄 Page Content */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          {children}
+        </div>
+
       </div>
     </div>
   );
