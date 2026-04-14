@@ -9,6 +9,8 @@ import Staff from "../pages/admin/Staff";
 import Settings from "../pages/admin/Settings";
 import Sales from "../pages/admin/Sales";
 
+import AdminLayout from "../layout/AdminLayout";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -17,14 +19,69 @@ export default function AppRouter() {
         {/* POS */}
         <Route path="/pos" element={<POSPage />} />
 
-        {/* ADMIN */}
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/reports" element={<Reports />} />
-        <Route path="/admin/products" element={<Products />} />
-        <Route path="/admin/stock" element={<Stock />} />
-        <Route path="/admin/staff" element={<Staff />} />
-        <Route path="/admin/settings" element={<Settings />} />
-        <Route path="/admin/sales" element={<Sales />} />
+        {/* ADMIN WITH LAYOUT */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/reports"
+          element={
+            <AdminLayout>
+              <Reports />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/products"
+          element={
+            <AdminLayout>
+              <Products />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/stock"
+          element={
+            <AdminLayout>
+              <Stock />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/sales"
+          element={
+            <AdminLayout>
+              <Sales />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/staff"
+          element={
+            <AdminLayout>
+              <Staff />
+            </AdminLayout>
+          }
+        />
+
+        <Route
+          path="/admin/settings"
+          element={
+            <AdminLayout>
+              <Settings />
+            </AdminLayout>
+          }
+        />
 
       </Routes>
     </BrowserRouter>
