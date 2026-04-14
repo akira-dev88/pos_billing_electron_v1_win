@@ -11,10 +11,12 @@ export async function checkoutCart(
   });
 }
 
-export async function getInvoice(sale_uuid: string) {
-  return await apiGet(`/sales/${sale_uuid}/invoice`);
+export async function getSales() {
+  const res = await fetch("/sales");
+  return res.json();
 }
 
-export async function getSales() {
-  return await apiGet("/sales");
+export async function getInvoice(saleUUID: string) {
+  const res = await fetch(`/sales/${saleUUID}/invoice`);
+  return res.json();
 }
