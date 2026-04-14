@@ -1,10 +1,24 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import POS from "./pages/pos/POSPage";
 import Dashboard from "./pages/admin/Dashboard";
 import AdminLayout from "./layout/AdminLayout";
 
+  function RouteLogger() {
+    const location = useLocation();
+
+    console.log("📍 Current Route:", location.pathname);
+
+    return (
+      <div className="fixed top-0 right-0 bg-black text-white text-xs p-1 z-50">
+        {location.pathname}
+      </div>
+    );
+  }
+  
 function App() {
+
+  
   return (
     <Routes>
       {/* Default */}
@@ -28,8 +42,18 @@ function App() {
 
       </Route>
 
+      <Route path="/" element={<Navigate to="/pos" />} />
+
+        <Route path="/pos" element={<POS />} />
+
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+
     </Routes>
+
+    
   );
 }
+
+
 
 export default App;
