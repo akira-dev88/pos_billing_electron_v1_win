@@ -22,6 +22,7 @@ export default function Reports() {
       if (stockRes.status === "fulfilled") setStock(stockRes.value);
       if (profitRes.status === "fulfilled") setProfit(profitRes.value);
 
+      setLoading(false); // ✅ ADD THIS
     });
   }, []);
 

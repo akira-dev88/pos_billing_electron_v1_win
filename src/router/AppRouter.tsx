@@ -9,8 +9,6 @@ import Staff from "../pages/admin/Staff";
 import Settings from "../pages/admin/Settings";
 import Sales from "../pages/admin/Sales";
 
-import AdminLayout from "../layout/AdminLayout";
-
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -23,63 +21,63 @@ export default function AppRouter() {
         <Route
           path="/admin/dashboard"
           element={
-            <AdminLayout>
+            <div>
               <Dashboard />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/reports"
           element={
-            <AdminLayout>
+            <div>
               <Reports />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/products"
           element={
-            <AdminLayout>
+            <div>
               <Products />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/stock"
           element={
-            <AdminLayout>
+            <div>
               <Stock />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/sales"
           element={
-            <AdminLayout>
+            <div>
               <Sales />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/staff"
           element={
-            <AdminLayout>
+            <div>
               <Staff />
-            </AdminLayout>
+            </div>
           }
         />
 
         <Route
           path="/admin/settings"
           element={
-            <AdminLayout>
+            <div>
               <Settings />
-            </AdminLayout>
+            </div>
           }
         />
 
