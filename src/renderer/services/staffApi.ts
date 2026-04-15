@@ -1,6 +1,5 @@
-import { apiGet, apiPost } from "./api";
+import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
-// 👤 Staff type
 export interface Staff {
   user_uuid: string;
   name: string;
@@ -9,12 +8,11 @@ export interface Staff {
   created_at: string;
 }
 
-// 📋 Get staff list
 export async function getStaff(): Promise<Staff[]> {
-  return await apiGet("/staff");
+  const res = await apiGet("/staff");
+  return Array.isArray(res) ? res : res?.data ?? [];
 }
 
-// ➕ Create staff
 export async function createStaff(data: {
   name: string;
   email: string;
@@ -22,4 +20,17 @@ export async function createStaff(data: {
   role: string;
 }): Promise<Staff> {
   return await apiPost("/staff", data);
+}
+
+// ✏️ UPDATE
+export async function updateStaff(
+  uuid: string,
+  data: Partial<Staff> & { password?: string }
+): Promise<Staff> {
+  return await apiPut(`/staff/${uuid}`, data);
+}
+
+// 🗑️ DELETE
+export async function deleteStaff(uuid: string): Promise<void> {
+  await apiDelete(`/staff/${uuid}`);
 }
