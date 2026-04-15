@@ -19,8 +19,8 @@ function NavItem({
     <button
       onClick={onClick}
       className={`w-full text-left px-3 py-2 rounded transition ${active
-          ? "bg-blue-600 text-white"
-          : "text-gray-300 hover:bg-gray-800"
+        ? "bg-blue-600 text-white"
+        : "text-gray-300 hover:bg-gray-800"
         }`}
     >
       {label}
@@ -106,6 +106,20 @@ export default function AdminLayout() {
                 path="/admin/supplier"
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/supplier")}
+              />
+
+              <NavItem
+                label="Purchase"
+                path="/admin/purchase"
+                currentPath={currentPath}
+                onClick={() => navigate("/admin/purchase")}
+              />
+
+              <NavItem
+                label="Purchases"
+                path="/admin/purchases"
+                currentPath={currentPath}
+                onClick={() => navigate("/admin/purchases")}
               />
 
               <NavItem

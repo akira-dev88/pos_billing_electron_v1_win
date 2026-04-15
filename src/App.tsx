@@ -13,6 +13,8 @@ import Staff from "./pages/admin/Staff";
 import Settings from "./pages/admin/Settings";
 import Profile from "./pages/admin/Profile";
 import SupplierPage from "./pages/admin/Supplier";
+import PurchasePage from "./pages/admin/Purchase";
+import PurchaseHistory from "./pages/admin/PurchaseHistory";
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
         <Route path="stock" element={<Stock />} />
         <Route path="reports" element={<Reports />} />
         <Route path="supplier" element={<SupplierPage />} />
+        <Route path="purchase" element={<PurchasePage />} />
+        <Route path="purchases" element={<PurchaseHistory />} />
         <Route path="staff" element={<Staff />} />
         <Route path="settings" element={<Settings />} />
         <Route path="profile" element={<Profile />} />
