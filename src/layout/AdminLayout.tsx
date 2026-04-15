@@ -1,5 +1,4 @@
-import { type ReactNode } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Topbar from "../components/Topbar";
 
@@ -19,21 +18,28 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2 rounded transition ${active
+      className={`w-full text-left px-3 py-2 rounded transition ${
+        active
           ? "bg-blue-600 text-white"
           : "text-gray-300 hover:bg-gray-800"
-        }`}
+      }`}
     >
       {label}
     </button>
   );
 }
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
+  // ✅ Prevent crash if user not loaded yet
+  if (!user) {
+    return <div className="p-4">Loading user...</div>;
+  }
+
+  // ✅ Works correctly with HashRouter
   const currentPath = location.pathname;
 
   return (
@@ -51,26 +57,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
 
-          {/* 📊 Overview */}
           {user.role === "owner" && (
-            <div>
-              <div className="text-xs text-gray-400 mb-2">OVERVIEW</div>
-              <NavItem
-                label="Dashboard"
-                path="/admin/dashboard"
-                currentPath={currentPath}
-                onClick={() => navigate("/admin/dashboard")}
-              />
-            </div>
+            <NavItem
+              label="Dashboard"
+              path="/admin/dashboard"
+              currentPath={currentPath}
+              onClick={() => navigate("/admin/dashboard")}
+            />
           )}
 
-          {/* 📦 Inventory */}
           {["owner", "manager"].includes(user.role) && (
-            <div>
-              <div className="text-xs text-gray-400 mb-2">INVENTORY</div>
-
+            <>
               <NavItem
                 label="Products"
                 path="/admin/products"
@@ -84,41 +83,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/stock")}
               />
-            </div>
-          )}
-
-          {/* 💰 Sales */}
-          {["owner", "manager"].includes(user.role) && (
-            <div>
-              <div className="text-xs text-gray-400 mb-2">SALES</div>
 
               <NavItem
-                label="Sales History"
+                label="Sales"
                 path="/admin/sales"
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/sales")}
               />
-            </div>
+            </>
           )}
 
-          {/* 📈 Reports */}
           {user.role === "owner" && (
-            <div>
-              <div className="text-xs text-gray-400 mb-2">REPORTS</div>
-
+            <>
               <NavItem
                 label="Reports"
                 path="/admin/reports"
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/reports")}
               />
-            </div>
-          )}
-
-          {/* ⚙️ Management */}
-          {user.role === "owner" && (
-            <div>
-              <div className="text-xs text-gray-400 mb-2">MANAGEMENT</div>
 
               <NavItem
                 label="Staff"
@@ -133,8 +115,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/settings")}
               />
-            </div>
+            </>
           )}
+
+          {/* Always visible */}
+          <NavItem
+            label="Profile"
+            path="/admin/profile"
+            currentPath={currentPath}
+            onClick={() => navigate("/admin/profile")}
+          />
         </div>
 
         {/* Footer */}
@@ -156,9 +146,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* 📄 Page Content */}
         <div className="flex-1 p-4 overflow-y-auto">
-          {children}
+          <Outlet />
         </div>
-
       </div>
     </div>
   );

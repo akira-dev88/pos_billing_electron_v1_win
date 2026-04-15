@@ -1,86 +1,41 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+
 import POS from "./pages/pos/POSPage";
+
+import AdminLayout from "./layout/AdminLayout";
+
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
-import Reports from "./pages/admin/Reports";
 import Sales from "./pages/admin/Sales";
 import Stock from "./pages/admin/Stock";
+import Reports from "./pages/admin/Reports";
 import Staff from "./pages/admin/Staff";
 import Settings from "./pages/admin/Settings";
-
-import ProtectedRoute from "./components/ProtectedRoute";
+import Profile from "./pages/admin/Profile";
 
 function App() {
   return (
     <Routes>
+      {/* Default */}
       <Route path="/" element={<Navigate to="/pos" />} />
 
-      {/* POS - everyone */}
+      {/* POS */}
       <Route path="/pos" element={<POS />} />
 
-      {/* Admin Routes */}
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={["owner"]}>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      {/* ✅ ADMIN ROUTES (NESTED) */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="products" element={<Products />} />
+        <Route path="sales" element={<Sales />} />
+        <Route path="stock" element={<Stock />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="staff" element={<Staff />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="profile" element={<Profile />} />
+      </Route>
 
-      <Route
-        path="/admin/products"
-        element={
-          <ProtectedRoute allowedRoles={["owner", "manager"]}>
-            <Products />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/reports"
-        element={
-          <ProtectedRoute allowedRoles={["owner"]}>
-            <Reports />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/sales"
-        element={
-          <ProtectedRoute allowedRoles={["owner", "manager"]}>
-            <Sales />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/stock"
-        element={
-          <ProtectedRoute allowedRoles={["owner", "manager"]}>
-            <Stock />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/staff"
-        element={
-          <ProtectedRoute allowedRoles={["owner"]}>
-            <Staff />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/admin/settings"
-        element={
-          <ProtectedRoute allowedRoles={["owner"]}>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
+      {/* Fallback */}
+      <Route path="*" element={<div>Page not found</div>} />
     </Routes>
   );
 }

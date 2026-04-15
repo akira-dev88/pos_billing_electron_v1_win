@@ -71,7 +71,7 @@ export default function Products() {
   };
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Products</h1>
 
       {/* 🧾 FORM */}
@@ -156,6 +156,6 @@ export default function Products() {
 
       </div>
 
-    </AdminLayout>
+    </div>
   );
 }

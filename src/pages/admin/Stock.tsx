@@ -25,7 +25,7 @@ export default function Stock() {
   };
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Stock Management</h1>
 
       <div className="bg-white rounded shadow">
@@ -105,6 +105,6 @@ export default function Stock() {
         )}
 
       </div>
-    </AdminLayout>
+    </div>
   );
 }

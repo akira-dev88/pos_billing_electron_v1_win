@@ -28,7 +28,7 @@ export default function Sales() {
   };
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Sales</h1>
 
       {/* 📋 TABLE */}
@@ -145,6 +145,6 @@ export default function Sales() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </div>
   );
 }

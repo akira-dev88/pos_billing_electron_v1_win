@@ -33,7 +33,7 @@ export default function Settings() {
   if (data === null) return <div>Loading...</div>;
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
 
       <div className="bg-white p-4 rounded shadow space-y-3 max-w-lg">
@@ -83,6 +83,6 @@ export default function Settings() {
         </button>
 
       </div>
-    </AdminLayout>
+    </div>
   );
 }

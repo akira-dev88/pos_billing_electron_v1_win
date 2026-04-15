@@ -21,7 +21,7 @@ export default function Staff() {
   };
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Staff</h1>
 
       {/* Create */}
@@ -58,6 +58,6 @@ export default function Staff() {
         ))}
       </div>
 
-    </AdminLayout>
+    </div>
   );
 }

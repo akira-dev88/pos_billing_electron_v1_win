@@ -10,7 +10,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <AdminLayout>
+    <div>
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
       {!data ? (
@@ -34,6 +34,6 @@ export default function Dashboard() {
 
         </div>
       )}
-    </AdminLayout>
+    </div>
   );
 }
