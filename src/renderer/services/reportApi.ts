@@ -1,3 +1,5 @@
+import { apiGet } from "./api";
+
 const API = "http://127.0.0.1:8000/api";
 
 function getHeaders() {
@@ -43,4 +45,8 @@ export async function getProfitReport() {
 
   if (!res.ok) throw new Error("Profit failed");
   return res.json();
+}
+
+export async function getSalesTrend() {
+  return await apiGet("/reports/sales-trend");
 }
