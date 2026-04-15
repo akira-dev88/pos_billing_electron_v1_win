@@ -8,6 +8,7 @@ import Stock from "../pages/admin/Stock";
 import Staff from "../pages/admin/Staff";
 import Settings from "../pages/admin/Settings";
 import Sales from "../pages/admin/Sales";
+import SupplierPage from "../pages/admin/Supplier";
 
 export default function AppRouter() {
   return (
@@ -77,6 +78,15 @@ export default function AppRouter() {
           element={
             <div>
               <Settings />
+            </div>
+          }
+        />
+
+        <Route
+          path="/admin/supplier"
+          element={
+            <div>
+              <SupplierPage />
             </div>
           }
         />
