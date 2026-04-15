@@ -89,6 +89,13 @@ export default function AdminLayout() {
                 currentPath={currentPath}
                 onClick={() => navigate("/admin/sales")}
               />
+
+              <NavItem
+                label="Customer"
+                path="/admin/customer"
+                currentPath={currentPath}
+                onClick={() => navigate("/admin/customer")}
+              />
             </>
           )}
 

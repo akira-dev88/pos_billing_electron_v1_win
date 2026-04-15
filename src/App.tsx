@@ -15,6 +15,7 @@ import Profile from "./pages/admin/Profile";
 import SupplierPage from "./pages/admin/Supplier";
 import PurchasePage from "./pages/admin/Purchase";
 import PurchaseHistory from "./pages/admin/PurchaseHistory";
+import CustomerPage from "./pages/admin/Customer";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="sales" element={<Sales />} />
+        <Route path="customer" element={<CustomerPage />} />
         <Route path="stock" element={<Stock />} />
         <Route path="reports" element={<Reports />} />
         <Route path="supplier" element={<SupplierPage />} />
