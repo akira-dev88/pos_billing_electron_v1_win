@@ -8,13 +8,16 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 import { getSalesTrend } from "../../renderer/services/reportApi";
+import { getProfitTrend } from "../../renderer/services/reportApi";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [profitTrend, setProfitTrend] = useState<any[]>([]);
 
   const [trend, setTrend] = useState<any[]>([]);
 
@@ -35,6 +38,19 @@ export default function Dashboard() {
       })
       .catch(console.error);
   }, []);
+
+  getProfitTrend()
+    .then((res) => {
+      const formatted = res.map((d: any) => ({
+        ...d,
+        date: new Date(d.date).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+        }),
+      }));
+      setProfitTrend(formatted);
+    })
+    .catch(console.error);
 
   if (loading) return <div>Loading dashboard...</div>;
   if (!data) return <div className="text-red-500">Failed to load data</div>;
@@ -88,6 +104,42 @@ export default function Dashboard() {
                 dataKey="total"
                 stroke="#2563eb"
                 strokeWidth={2}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow">
+        <h2 className="font-semibold mb-3">Profit (Last 7 Days)</h2>
+
+        <div className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={profitTrend}>
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+
+              <Line
+                type="monotone"
+                dataKey="revenue"
+                stroke="#16a34a"
+                strokeWidth={2}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="cost"
+                stroke="#dc2626"
+                strokeWidth={2}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="profit"
+                stroke="#2563eb"
+                strokeWidth={3}
               />
             </LineChart>
           </ResponsiveContainer>

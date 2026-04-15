@@ -50,3 +50,7 @@ export async function getProfitReport() {
 export async function getSalesTrend() {
   return await apiGet("/reports/sales-trend");
 }
+
+export async function getProfitTrend() {
+  return await apiGet("/reports/profit-trend");
+}
