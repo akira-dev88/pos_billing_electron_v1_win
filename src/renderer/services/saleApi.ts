@@ -1,4 +1,4 @@
-import { apiGet } from "./api";
+import { apiGet, apiPost } from "./api";
 
 export interface Sale {
   sale_uuid: string;
@@ -36,4 +36,15 @@ export async function getInvoice(
   saleUUID: string
 ): Promise<Invoice> {
   return await apiGet(`/sales/${saleUUID}/invoice`);
+}
+
+export async function checkoutCart(
+  cart_uuid: string,
+  payments: { method: string; amount: number }[],
+  customer_uuid?: string | null
+) {
+  return await apiPost(`/carts/${cart_uuid}/checkout`, {
+    payments,
+    customer_uuid: customer_uuid || null,
+  });
 }

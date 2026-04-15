@@ -1,13 +1,25 @@
-export async function getStaff() {
-  const res = await fetch("/staff");
-  return res.json();
+import { apiGet, apiPost } from "./api";
+
+// 👤 Staff type
+export interface Staff {
+  user_uuid: string;
+  name: string;
+  email: string;
+  role: string;
+  created_at: string;
 }
 
-export async function createStaff(data: any) {
-  const res = await fetch("/staff", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
+// 📋 Get staff list
+export async function getStaff(): Promise<Staff[]> {
+  return await apiGet("/staff");
+}
+
+// ➕ Create staff
+export async function createStaff(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}): Promise<Staff> {
+  return await apiPost("/staff", data);
 }
