@@ -6,6 +6,7 @@ import {
   deleteCustomer,
   getCustomerLedger,
 } from "../../renderer/services/customerApi";
+import CustomerLedgerPage from "./CustomerLedgerPage";
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -153,6 +154,14 @@ export default function CustomerPage() {
             </div>
 
             <div className="flex gap-2">
+
+              <button
+                onClick={() => setSelectedCustomer(c)}
+                className="text-blue-600 text-sm"
+              >
+                View Ledger
+              </button>
+
               <button
                 onClick={() => handleEdit(c)}
                 className="text-blue-600"
@@ -173,57 +182,21 @@ export default function CustomerPage() {
 
       {/* 📊 LEDGER MODAL */}
       {selectedCustomer && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
-          <div className="bg-white w-[400px] p-4 rounded shadow max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded w-[700px] max-h-[80vh] overflow-y-auto">
 
-            <h2 className="text-lg font-bold mb-2">
-              {selectedCustomer.name} Ledger
-            </h2>
+            <div className="flex justify-between mb-4">
+              <h2 className="text-lg font-bold">
+                {selectedCustomer.name} Ledger
+              </h2>
 
-            {ledger.length === 0 ? (
-              <div className="text-center text-gray-500">
-                No transactions
-              </div>
-            ) : (
-              ledger.map((l, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between border-b py-2 text-sm"
-                >
-                  <div>
-                    <div>{l.note || l.type}</div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(l.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
+              <button onClick={() => setSelectedCustomer(null)}>
+                ✕
+              </button>
+            </div>
 
-                  <div className="text-right">
-                    <div
-                      className={
-                        l.type === "debit"
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }
-                    >
-                      {l.type === "debit" ? "+" : "-"}₹
-                      {Number(l.amount).toFixed(2)}
-                    </div>
+            <CustomerLedgerPage customer={selectedCustomer} />
 
-                    <div className="text-xs font-semibold">
-                      Bal: ₹{Number(l.balance).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {/* CLOSE */}
-            <button
-              className="mt-4 w-full bg-gray-600 text-white p-2 rounded"
-              onClick={() => setSelectedCustomer(null)}
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
