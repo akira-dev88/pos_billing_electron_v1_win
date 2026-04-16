@@ -4,13 +4,12 @@ import {
   createCustomer,
   updateCustomer,
   deleteCustomer,
-  getCustomerLedger,
 } from "../../renderer/services/customerApi";
+
 import CustomerLedgerPage from "./CustomerLedgerPage";
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<any[]>([]);
-  const [ledger, setLedger] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
   const [form, setForm] = useState({
@@ -31,42 +30,38 @@ export default function CustomerPage() {
     setCustomers(Array.isArray(data) ? data : []);
   };
 
-  const openLedger = async (customer: any) => {
-    setSelectedCustomer(customer);
-
-    try {
-      const data = await getCustomerLedger(customer.customer_uuid);
-      setLedger(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error(e);
-      setLedger([]);
-    }
-  };
-
+  // ✅ CREATE / UPDATE
   const handleSave = async () => {
     if (!form.name) return alert("Name required");
 
-    if (editing) {
-      const updated = await updateCustomer(
-        editing.customer_uuid,
-        form
-      );
+    try {
+      if (editing) {
+        const updated = await updateCustomer(
+          editing.customer_uuid,
+          form
+        );
 
-      setCustomers((prev) =>
-        prev.map((c) =>
-          c.customer_uuid === updated.customer_uuid ? updated : c
-        )
-      );
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.customer_uuid === updated.customer_uuid ? updated : c
+          )
+        );
 
-      setEditing(null);
-    } else {
-      const created = await createCustomer(form);
-      setCustomers((prev) => [created, ...prev]);
+        setEditing(null);
+      } else {
+        const created = await createCustomer(form);
+        setCustomers((prev) => [created, ...prev]);
+      }
+
+      setForm({ name: "", mobile: "", address: "", gstin: "" });
+
+    } catch (e) {
+      console.error(e);
+      alert("Save failed");
     }
-
-    setForm({ name: "", mobile: "", address: "", gstin: "" });
   };
 
+  // ✅ EDIT
   const handleEdit = (c: any) => {
     setEditing(c);
     setForm({
@@ -77,6 +72,7 @@ export default function CustomerPage() {
     });
   };
 
+  // ✅ DELETE
   const handleDelete = async (uuid: string) => {
     if (!confirm("Delete customer?")) return;
 
@@ -87,11 +83,17 @@ export default function CustomerPage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Customers</h1>
+    <div className="space-y-4">
 
-      {/* FORM */}
-      <div className="bg-white p-4 rounded shadow mb-4 space-y-2">
+      {/* 🔷 HEADER */}
+      <h1 className="text-2xl font-bold">Customers</h1>
+
+      {/* 🔷 FORM */}
+      <div className="bg-white p-4 rounded shadow space-y-2">
+        <h2 className="font-semibold">
+          {editing ? "Edit Customer" : "Add Customer"}
+        </h2>
+
         <input
           placeholder="Name"
           className="border p-2 w-full"
@@ -128,74 +130,134 @@ export default function CustomerPage() {
           }
         />
 
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white p-2 w-full rounded"
-        >
-          {editing ? "Update Customer" : "Create Customer"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            {editing ? "Update" : "Create"}
+          </button>
+
+          {editing && (
+            <button
+              onClick={() => {
+                setEditing(null);
+                setForm({
+                  name: "",
+                  mobile: "",
+                  address: "",
+                  gstin: "",
+                });
+              }}
+              className="bg-gray-300 px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* LIST */}
-      <div className="bg-white p-4 rounded shadow">
-        {customers.map((c) => (
-          <div
-            key={c.customer_uuid}
-            className="flex justify-between border-b py-2 items-center"
-          >
+      {/* 🔷 LIST */}
+      <div className="bg-white rounded shadow">
+        {customers.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No customers found
+          </div>
+        ) : (
+          customers.map((c) => (
             <div
-              className="cursor-pointer"
-              onClick={() => openLedger(c)}
+              key={c.customer_uuid}
+              className="flex justify-between items-center border-b p-3"
             >
-              <div className="font-semibold">{c.name}</div>
-              <div className="text-xs text-gray-500">
-                {c.mobile}
+              {/* LEFT */}
+              <div>
+                <div className="font-semibold">{c.name}</div>
+                <div className="text-xs text-gray-500">
+                  {c.mobile}
+                </div>
+
+                {/* 💰 CREDIT */}
+                <div className="text-xs mt-1">
+                  Credit:
+                  <span
+                    className={`ml-1 font-semibold ${
+                      c.credit_balance > 0
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    ₹{c.credit_balance || 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* RIGHT */}
+              <div className="flex gap-3 text-sm">
+                <button
+                  onClick={() => setSelectedCustomer(c)}
+                  className="text-blue-600"
+                >
+                  Ledger
+                </button>
+
+                <button
+                  onClick={() => handleEdit(c)}
+                  className="text-gray-700"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => handleDelete(c.customer_uuid)}
+                  className="text-red-600"
+                >
+                  Delete
+                </button>
               </div>
             </div>
-
-            <div className="flex gap-2">
-
-              <button
-                onClick={() => setSelectedCustomer(c)}
-                className="text-blue-600 text-sm"
-              >
-                View Ledger
-              </button>
-
-              <button
-                onClick={() => handleEdit(c)}
-                className="text-blue-600"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => handleDelete(c.customer_uuid)}
-                className="text-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* 📊 LEDGER MODAL */}
+      {/* 🔷 LEDGER MODAL */}
       {selectedCustomer && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded w-[700px] max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-            <div className="flex justify-between mb-4">
-              <h2 className="text-lg font-bold">
-                {selectedCustomer.name} Ledger
-              </h2>
+          <div className="bg-white rounded shadow w-[700px] max-h-[80vh] flex flex-col">
 
-              <button onClick={() => setSelectedCustomer(null)}>
+            {/* HEADER */}
+            <div className="flex justify-between items-center p-4 border-b">
+              <div>
+                <div className="font-bold text-lg">
+                  {selectedCustomer.name}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  Credit:
+                  <span
+                    className={`ml-1 font-semibold ${
+                      selectedCustomer.credit_balance > 0
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    ₹{selectedCustomer.credit_balance || 0}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedCustomer(null)}
+                className="text-gray-600"
+              >
                 ✕
               </button>
             </div>
 
-            <CustomerLedgerPage customer={selectedCustomer} />
+            {/* CONTENT */}
+            <div className="p-4 overflow-y-auto flex-1">
+              <CustomerLedgerPage customer={selectedCustomer} />
+            </div>
 
           </div>
         </div>

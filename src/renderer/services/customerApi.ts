@@ -43,3 +43,7 @@ export async function deleteCustomer(uuid: string) {
 export async function getCustomerLedger(uuid: string) {
   return await apiGet(`/customers/${uuid}/ledger`);
 }
+
+export async function getCustomerSummary() {
+  return await apiGet("/customers/summary");
+}

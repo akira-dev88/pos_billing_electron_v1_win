@@ -16,12 +16,15 @@ import {
 
 import { checkoutCart, getInvoice, getSales } from "../../renderer/services/saleApi";
 import { addCustomerPayment, createCustomer, getCustomers, getLedger } from "../../renderer/services/customerApi";
+import CustomerStatement from "../admin/CustomerStatement";
 
 function POSpage() {
 
   const [cartUUID, setCartUUID] = useState<string | null>(null);
   const [cartData, setCartData] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
+
+  const [showPrint, setShowPrint] = useState(false);
 
   const [payments, setPayments] = useState([
     { method: "cash", amount: 0 },
@@ -109,6 +112,15 @@ function POSpage() {
 
     if (totalPaid < grandTotal && !selectedCustomer) {
       alert("Select customer for credit sale");
+      return;
+    }
+
+    if (
+      selectedCustomer &&
+      totalPaid < grandTotal &&
+      selectedCustomer.credit_balance > 5000
+    ) {
+      alert("Customer already has high pending dues");
       return;
     }
 
@@ -235,6 +247,21 @@ function POSpage() {
     const data = await getSales();
     setSales(data);
   };
+
+  useEffect(() => {
+    if (selectedCustomer && cartData?.summary?.grand_total) {
+      const due = selectedCustomer.credit_balance || 0;
+
+      if (due > 0) {
+        setPayments([
+          {
+            method: "cash",
+            amount: Math.min(due, cartData.summary.grand_total),
+          },
+        ]);
+      }
+    }
+  }, [selectedCustomer]);
 
   return (
     <div className="h-screen flex flex-col">
@@ -434,7 +461,50 @@ function POSpage() {
           </div>
         </div>
       </div>
+
+      <button
+        onClick={() => {
+          setShowPrint(true);
+
+          setTimeout(() => {
+            window.print();
+            setShowPrint(false);
+          }, 300);
+        }}
+        className="bg-blue-600 text-white px-3 py-1 rounded"
+      >
+        Print Statement
+      </button>
+
+      {selectedCustomer?.credit_balance > 0 && (
+        <button
+          className="w-full bg-orange-500 text-white p-2 rounded"
+          onClick={() => {
+            setPayments([
+              {
+                method: "cash",
+                amount: selectedCustomer.credit_balance,
+              },
+            ]);
+          }}
+        >
+          Clear Old Due ₹{selectedCustomer.credit_balance}
+        </button>
+      )}
+
+      {showPrint && (
+        <div className="fixed inset-0 bg-white z-50">
+          <CustomerStatement
+            customer={selectedCustomer}
+            ledger={ledger}
+          />
+        </div>
+      )}
+
+
     </div>
+
+
   );
 
 

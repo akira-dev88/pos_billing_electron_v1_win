@@ -3,11 +3,14 @@ import {
   getCustomerLedger,
   addCustomerPayment,
 } from "../../renderer/services/customerApi";
+import CustomerStatement from "./CustomerStatement";
 
 export default function CustomerLedgerPage({ customer }: any) {
   const [ledger, setLedger] = useState<any[]>([]);
   const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState("cash");
+
+  const [showPrint, setShowPrint] = useState(false);
 
   useEffect(() => {
     load();
@@ -64,6 +67,21 @@ export default function CustomerLedgerPage({ customer }: any) {
           >
             Pay
           </button>
+
+          <button
+            onClick={() => {
+              setShowPrint(true);
+
+              setTimeout(() => {
+                window.print();
+                setShowPrint(false);
+              }, 300);
+            }}
+            className="bg-blue-600 text-white px-3 py-1 rounded"
+          >
+            Print Statement
+          </button>
+
         </div>
       </div>
 

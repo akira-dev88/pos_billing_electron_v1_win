@@ -13,6 +13,7 @@ import {
 
 import { getSalesTrend } from "../../renderer/services/reportApi";
 import { getProfitTrend } from "../../renderer/services/reportApi";
+import { getCustomerSummary } from "../../renderer/services/customerApi";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -20,6 +21,12 @@ export default function Dashboard() {
   const [profitTrend, setProfitTrend] = useState<any[]>([]);
 
   const [trend, setTrend] = useState<any[]>([]);
+
+  const [customerSummary, setCustomerSummary] = useState<any>(null);
+
+  useEffect(() => {
+    getCustomerSummary().then(setCustomerSummary);
+  }, []);
 
   useEffect(() => {
     getDashboardReport().then(setData).finally(() => setLoading(false));
@@ -86,6 +93,28 @@ export default function Dashboard() {
           <div className="text-gray-500 text-sm">Total Orders</div>
           <div className="text-2xl font-bold">
             {data.total_orders || 0}
+          </div>
+
+          <div className="bg-white p-5 rounded-xl shadow">
+            <div className="text-gray-500 text-sm">Total Credit Given</div>
+            <div className="text-2xl font-bold text-red-600">
+              ₹{customerSummary?.total_credit || 0}
+            </div>
+
+            <div className="text-xs text-gray-500 mt-1">
+              {customerSummary?.customers_with_credit || 0} customers with dues
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl shadow">
+            <div className="font-semibold mb-2">Top Debtors</div>
+
+            {customerSummary?.top_debtors?.map((c: any, i: number) => (
+              <div key={i} className="flex justify-between text-sm py-1">
+                <span>{c.name}</span>
+                <span className="text-red-600">₹{c.credit_balance}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
