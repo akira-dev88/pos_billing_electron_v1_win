@@ -14,19 +14,22 @@ export default function LoginPage() {
     try {
       const res = await apiPost("/login", { email, password });
 
-      if (!res.token) {
-        alert("Invalid login");
+
+      const token =
+        res?.token ||
+        res?.data?.token;
+
+      const user =
+        res?.user ||
+        res?.data?.user;
+
+      if (!token || !user) {
+        console.error("Invalid login response", res);
+        alert("Login response invalid");
         return;
       }
 
-      const user = res?.data?.user;
-
-      if (!user) {
-        alert("User data missing");
-        return;
-      }
-
-      login(res.token, user);
+      login(token, user);
 
       navigate("/pos");
     } catch (e) {
