@@ -1,12 +1,9 @@
 const BASE_URL = "http://127.0.0.1:8000/api";
 
-import { useAuth } from "../../auth/useAuth";
-
 function getToken() {
-  return useAuth.getState().token;
+  return localStorage.getItem("token");
 }
 
-// 🔧 Common headers
 function getHeaders() {
   return {
     "Content-Type": "application/json",
@@ -14,36 +11,32 @@ function getHeaders() {
   };
 }
 
-// GET
+// 🔥 CENTRALIZED HANDLER
+async function handleResponse(res: Response) {
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+    return;
+  }
+
+  return res.json();
+}
+
 export async function apiGet(url: string) {
   const res = await fetch(BASE_URL + url, {
     headers: getHeaders(),
   });
-
-  if (res.status === 401) {
-    useAuth.getState().logout();
-    window.location.href = "/login";
-    return [];
-  }
-
-  const data = await res.json();
-
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data.data)) return data.data;
-
-  return data;
+  return handleResponse(res);
 }
 
-// POST
 export async function apiPost(url: string, data: any) {
   const res = await fetch(BASE_URL + url, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(data),
   });
-  return res.json();
+  return handleResponse(res);
 }
-
 // PUT ✅
 export async function apiPut(url: string, data: any) {
   const res = await fetch(BASE_URL + url, {

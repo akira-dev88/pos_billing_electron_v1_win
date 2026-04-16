@@ -1,86 +1,58 @@
-// src/pages/LoginPage.tsx
-
 import { useState } from "react";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../renderer/services/authApi";
-import { useAuth } from "../auth/useAuth";
+import { apiPost } from "../renderer/services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
-    const navigate = useNavigate();
-    const { setAuth } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            alert("Enter email & password");
-            return;
-        }
+  const handleLogin = async () => {
+    try {
+      const res = await apiPost("/login", { email, password });
 
-        setLoading(true);
+      if (!res.token) {
+        alert("Invalid login");
+        return;
+      }
 
-        try {
-            const res = await login(email, password);
+      login(res.token, res.user);
+      navigate("/pos");
+    } catch (e) {
+      alert("Login failed");
+    }
+  };
 
-            if (!res.token || !res.user) {
-                alert("Invalid credentials");
-                return;
-            }
+  return (
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-6 rounded shadow w-80 space-y-3">
+        <h1 className="text-lg font-bold">Login</h1>
 
-            setAuth(res.user, res.token);
+        <input
+          className="border p-2 w-full"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-            navigate("/admin/dashboard");
-        } catch (e) {
-            console.error(e);
-            alert("Login failed");
-        }
+        <input
+          type="password"
+          className="border p-2 w-full"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-        setLoading(false);
-    };
-
-    const { user } = useAuth();
-
-    useEffect(() => {
-        if (user) {
-            navigate("/admin/dashboard");
-        }
-    }, [user]);
-
-    return (
-        <div className="h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-6 rounded shadow w-[350px] space-y-4">
-
-                <h1 className="text-xl font-bold text-center">
-                    Login
-                </h1>
-
-                <input
-                    className="border p-2 w-full"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-
-                <input
-                    type="password"
-                    className="border p-2 w-full"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-
-                <button
-                    onClick={handleLogin}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white p-2 rounded"
-                >
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-
-            </div>
-        </div>
-    );
+        <button
+          onClick={handleLogin}
+          className="bg-blue-600 text-white w-full p-2 rounded"
+        >
+          Login
+        </button>
+      </div>
+    </div>
+  );
 }

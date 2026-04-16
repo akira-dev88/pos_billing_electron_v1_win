@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import POS from "./pages/pos/POSPage";
+import LoginPage from "./pages/LoginPage";
 
 import AdminLayout from "./layout/AdminLayout";
 
@@ -16,41 +17,45 @@ import SupplierPage from "./pages/admin/Supplier";
 import PurchasePage from "./pages/admin/Purchase";
 import PurchaseHistory from "./pages/admin/PurchaseHistory";
 import CustomerPage from "./pages/admin/Customer";
-import { useEffect } from "react";
-import { useAuth } from "./auth/useAuth";
 
-function App() {
+import AuthGate from "./context/AuthGate";
+import ProtectedRoute from "./context/ProtectedRoute";
 
-  const { token, setAuth } = useAuth();
-
-  useEffect(() => {
-    if (token && !useAuth.getState().user) {
-      // OPTIONAL: fetch user profile
-      fetch("http://127.0.0.1:8000/api/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((res) => res.json())
-        .then((user) => {
-          setAuth(user, token);
-        })
-        .catch(() => {
-          useAuth.getState().logout();
-        });
-    }
-  }, [token]);
-
+export default function App() {
   return (
     <Routes>
-      {/* Default */}
-      <Route path="/" element={<Navigate to="/pos" />} />
+      {/* LOGIN */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* ROOT */}
+      <Route
+        path="/"
+        element={
+          <AuthGate>
+            <Navigate to="/pos" />
+          </AuthGate>
+        }
+      />
 
       {/* POS */}
-      <Route path="/pos" element={<POS />} />
+      <Route
+        path="/pos"
+        element={
+          <AuthGate>
+            <POS />
+          </AuthGate>
+        }
+      />
 
-      {/* ✅ ADMIN ROUTES (NESTED) */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* ADMIN */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["owner", "manager"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="sales" element={<Sales />} />
@@ -65,10 +70,8 @@ function App() {
         <Route path="profile" element={<Profile />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<div>Page not found</div>} />
+      {/* FALLBACK */}
+      <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 }
-
-export default App;
