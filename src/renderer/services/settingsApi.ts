@@ -1,15 +1,14 @@
-const BASE_URL = "http://127.0.0.1:8000";
+import { apiGet, apiPost, apiPut } from "./api";
 
 export async function getSettings() {
-  const res = await fetch(`${BASE_URL}/api/settings`);
-  return res.json();
+  return await apiGet("/settings");
 }
 
 export async function saveSettings(data: any) {
-  const res = await fetch(`${BASE_URL}/api/settings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
+  return await apiPost("/settings", data);
+}
+
+// ✅ optional update
+export async function updateSettings(data: any) {
+  return await apiPut("/settings", data);
 }

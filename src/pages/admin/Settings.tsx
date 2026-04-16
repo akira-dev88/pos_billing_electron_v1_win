@@ -1,15 +1,30 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "../../layout/AdminLayout";
 import { getSettings, saveSettings } from "../../renderer/services/settingsApi";
 
 export default function Settings() {
   const [data, setData] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const res = await getSettings();
+      try {
+        const res = await getSettings();
 
-      if (!res) {
+        // ✅ FIX: extract from API format
+        const settings = res?.data;
+
+        setData(
+          settings || {
+            shop_name: "",
+            mobile: "",
+            address: "",
+            gstin: "",
+            invoice_prefix: "INV",
+          }
+        );
+      } catch (e) {
+        console.error("Settings load failed", e);
+
         setData({
           shop_name: "",
           mobile: "",
@@ -17,8 +32,6 @@ export default function Settings() {
           gstin: "",
           invoice_prefix: "INV",
         });
-      } else {
-        setData(res);
       }
     }
 
@@ -26,60 +39,109 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
-    await saveSettings(data);
-    alert("Saved!");
+    try {
+      setSaving(true);
+
+      const res = await saveSettings(data);
+
+      if (!res?.success) {
+        alert("Save failed");
+        return;
+      }
+
+      // ✅ sync UI with backend response
+      setData(res.data);
+
+      alert("Settings saved ✅");
+    } catch (e) {
+      console.error(e);
+      alert("Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (data === null) return <div>Loading...</div>;
+  if (data === null) {
+    return <div className="p-4">Loading settings...</div>;
+  }
 
   return (
-    <div>
+    <div className="max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
 
-      <div className="bg-white p-4 rounded shadow space-y-3 max-w-lg">
+      <div className="bg-white p-5 rounded-xl shadow space-y-4">
 
-        <input
-          placeholder="Shop Name"
-          className="border p-2 w-full"
-          value={data.shop_name}
-          onChange={(e) => setData({ ...data, shop_name: e.target.value })}
-        />
+        {/* Shop Name */}
+        <div>
+          <label className="text-sm font-medium">Shop Name *</label>
+          <input
+            className="border p-2 w-full rounded mt-1"
+            value={data.shop_name || ""}
+            onChange={(e) =>
+              setData({ ...data, shop_name: e.target.value })
+            }
+          />
+        </div>
 
-        <input
-          placeholder="Mobile"
-          className="border p-2 w-full"
-          value={data.mobile || ""}
-          onChange={(e) => setData({ ...data, mobile: e.target.value })}
-        />
+        {/* Mobile */}
+        <div>
+          <label className="text-sm font-medium">Mobile</label>
+          <input
+            className="border p-2 w-full rounded mt-1"
+            value={data.mobile || ""}
+            onChange={(e) =>
+              setData({ ...data, mobile: e.target.value })
+            }
+          />
+        </div>
 
-        <input
-          placeholder="Address"
-          className="border p-2 w-full"
-          value={data.address || ""}
-          onChange={(e) => setData({ ...data, address: e.target.value })}
-        />
+        {/* Address */}
+        <div>
+          <label className="text-sm font-medium">Address</label>
+          <textarea
+            className="border p-2 w-full rounded mt-1"
+            value={data.address || ""}
+            onChange={(e) =>
+              setData({ ...data, address: e.target.value })
+            }
+          />
+        </div>
 
-        <input
-          placeholder="GSTIN"
-          className="border p-2 w-full"
-          value={data.gstin || ""}
-          onChange={(e) => setData({ ...data, gstin: e.target.value })}
-        />
+        {/* GSTIN */}
+        <div>
+          <label className="text-sm font-medium">GSTIN</label>
+          <input
+            className="border p-2 w-full rounded mt-1"
+            value={data.gstin || ""}
+            onChange={(e) =>
+              setData({ ...data, gstin: e.target.value })
+            }
+          />
+        </div>
 
-        <input
-          placeholder="Invoice Prefix"
-          className="border p-2 w-full"
-          value={data.invoice_prefix || ""}
-          onChange={(e) =>
-            setData({ ...data, invoice_prefix: e.target.value })
-          }
-        />
+        {/* Invoice Prefix */}
+        <div>
+          <label className="text-sm font-medium">Invoice Prefix</label>
+          <input
+            className="border p-2 w-full rounded mt-1"
+            value={data.invoice_prefix || ""}
+            onChange={(e) =>
+              setData({ ...data, invoice_prefix: e.target.value })
+            }
+          />
+        </div>
 
+        {/* Save Button */}
         <button
           onClick={handleSave}
-          className="bg-green-600 text-white p-2 w-full"
+          disabled={saving}
+          className={`w-full p-2 rounded text-white font-semibold ${
+            saving
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
+          }`}
         >
-          Save Settings
+          {saving ? "Saving..." : "Save Settings"}
         </button>
 
       </div>
