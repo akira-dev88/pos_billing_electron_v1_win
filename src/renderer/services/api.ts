@@ -1,7 +1,9 @@
 const BASE_URL = "http://127.0.0.1:8000/api";
 
+import { useAuth } from "../../auth/useAuth";
+
 function getToken() {
-  return localStorage.getItem("token");
+  return useAuth.getState().token;
 }
 
 // 🔧 Common headers
@@ -18,9 +20,14 @@ export async function apiGet(url: string) {
     headers: getHeaders(),
   });
 
+  if (res.status === 401) {
+    useAuth.getState().logout();
+    window.location.href = "/login";
+    return [];
+  }
+
   const data = await res.json();
 
-  // 🔥 normalize response
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.data)) return data.data;
 

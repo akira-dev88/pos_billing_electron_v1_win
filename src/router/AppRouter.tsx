@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import POSPage from "../pages/pos/POSPage";
 import Dashboard from "../pages/admin/Dashboard";
@@ -9,87 +9,47 @@ import Staff from "../pages/admin/Staff";
 import Settings from "../pages/admin/Settings";
 import Sales from "../pages/admin/Sales";
 import SupplierPage from "../pages/admin/Supplier";
+import LoginPage from "../pages/LoginPage";
+
+import ProtectedRoute from "../components/ProtectedRoute";
+import AdminLayout from "../layout/AdminLayout";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* POS */}
+        {/* 🔐 LOGIN */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* 🔓 PUBLIC (optional) */}
         <Route path="/pos" element={<POSPage />} />
 
-        {/* ADMIN WITH LAYOUT */}
+        {/* 🔒 ADMIN AREA */}
         <Route
-          path="/admin/dashboard"
+          path="/admin"
           element={
-            <div>
-              <Dashboard />
-            </div>
+            <ProtectedRoute allowedRoles={["owner", "manager"]}>
+              <AdminLayout />
+            </ProtectedRoute>
           }
-        />
+        >
+          {/* Nested routes */}
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="products" element={<Products />} />
+          <Route path="stock" element={<Stock />} />
+          <Route path="sales" element={<Sales />} />
+          <Route path="staff" element={<Staff />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="supplier" element={<SupplierPage />} />
+        </Route>
 
-        <Route
-          path="/admin/reports"
-          element={
-            <div>
-              <Reports />
-            </div>
-          }
-        />
+        {/* 🔁 DEFAULT ROUTE */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        <Route
-          path="/admin/products"
-          element={
-            <div>
-              <Products />
-            </div>
-          }
-        />
-
-        <Route
-          path="/admin/stock"
-          element={
-            <div>
-              <Stock />
-            </div>
-          }
-        />
-
-        <Route
-          path="/admin/sales"
-          element={
-            <div>
-              <Sales />
-            </div>
-          }
-        />
-
-        <Route
-          path="/admin/staff"
-          element={
-            <div>
-              <Staff />
-            </div>
-          }
-        />
-
-        <Route
-          path="/admin/settings"
-          element={
-            <div>
-              <Settings />
-            </div>
-          }
-        />
-
-        <Route
-          path="/admin/supplier"
-          element={
-            <div>
-              <SupplierPage />
-            </div>
-          }
-        />
+        {/* ❌ 404 fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
     </BrowserRouter>

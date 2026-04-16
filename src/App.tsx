@@ -16,8 +16,31 @@ import SupplierPage from "./pages/admin/Supplier";
 import PurchasePage from "./pages/admin/Purchase";
 import PurchaseHistory from "./pages/admin/PurchaseHistory";
 import CustomerPage from "./pages/admin/Customer";
+import { useEffect } from "react";
+import { useAuth } from "./auth/useAuth";
 
 function App() {
+
+  const { token, setAuth } = useAuth();
+
+  useEffect(() => {
+    if (token && !useAuth.getState().user) {
+      // OPTIONAL: fetch user profile
+      fetch("http://127.0.0.1:8000/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((user) => {
+          setAuth(user, token);
+        })
+        .catch(() => {
+          useAuth.getState().logout();
+        });
+    }
+  }, [token]);
+
   return (
     <Routes>
       {/* Default */}
