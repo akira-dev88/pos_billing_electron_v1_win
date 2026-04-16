@@ -4,6 +4,7 @@ import { apiGet } from "../renderer/services/api";
 type User = {
   name: string;
   role: "owner" | "manager" | "cashier";
+  email?: string;
 };
 
 const AuthContext = createContext<any>(null);
@@ -12,7 +13,7 @@ export function AuthProvider({ children }: any) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 INIT AUTH
+  // 🔥 INIT AUTH (runs once on app load)
   useEffect(() => {
     const init = async () => {
       const token = localStorage.getItem("token");
@@ -25,8 +26,19 @@ export function AuthProvider({ children }: any) {
 
       try {
         const res = await apiGet("/me");
-        setUser(res.user || res); // 🔥 FIXED
+
+        // ✅ FIX: correct data extraction
+        const userData = res?.data?.user;
+
+        if (!userData) {
+          throw new Error("Invalid user response");
+        }
+
+        setUser(userData);
       } catch (e) {
+        console.error("Auth failed", e);
+
+        // ❌ Token invalid → force logout
         localStorage.removeItem("token");
         setUser(null);
       }
@@ -37,11 +49,13 @@ export function AuthProvider({ children }: any) {
     init();
   }, []);
 
+  // ✅ LOGIN
   const login = (token: string, user: User) => {
     localStorage.setItem("token", token);
     setUser(user);
   };
 
+  // ✅ LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);

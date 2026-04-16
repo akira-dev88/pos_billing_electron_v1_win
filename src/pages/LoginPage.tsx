@@ -19,9 +19,18 @@ export default function LoginPage() {
         return;
       }
 
-      login(res.token, res.user);
+      const user = res?.data?.user;
+
+      if (!user) {
+        alert("User data missing");
+        return;
+      }
+
+      login(res.token, user);
+
       navigate("/pos");
     } catch (e) {
+      console.error(e);
       alert("Login failed");
     }
   };
