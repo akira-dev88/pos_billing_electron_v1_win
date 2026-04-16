@@ -121,7 +121,7 @@ export default function Products() {
           <span>Actions</span>
         </div>
 
-        {products.map((p) => (
+        {(products || []).map((p) => (
           <div
             key={p.product_uuid}
             className="grid grid-cols-4 p-3 border-b items-center"

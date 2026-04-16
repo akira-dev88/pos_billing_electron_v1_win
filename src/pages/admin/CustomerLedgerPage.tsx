@@ -132,7 +132,7 @@ Please clear your dues.
               <span>Date</span>
             </div>
 
-            {ledger.map((l) => (
+            {(ledger || []).map((l) => (
               <div
                 key={l.id}
                 className="grid grid-cols-4 p-3 border-b text-sm"

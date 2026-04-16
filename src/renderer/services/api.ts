@@ -17,7 +17,14 @@ export async function apiGet(url: string) {
   const res = await fetch(BASE_URL + url, {
     headers: getHeaders(),
   });
-  return res.json();
+
+  const data = await res.json();
+
+  // 🔥 normalize response
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.data)) return data.data;
+
+  return data;
 }
 
 // POST

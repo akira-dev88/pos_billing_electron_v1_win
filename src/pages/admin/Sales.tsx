@@ -62,7 +62,7 @@ export default function Sales() {
             No sales found
           </div>
         ) : (
-          sales.map((sale) => (
+          (sales || []).map((sale) => (
             <div
               key={sale.sale_uuid}
               className="grid grid-cols-4 p-3 border-b items-center"

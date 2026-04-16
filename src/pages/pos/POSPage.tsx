@@ -115,13 +115,22 @@ function POSpage() {
       return;
     }
 
-    if (
-      selectedCustomer &&
-      totalPaid < grandTotal &&
-      selectedCustomer.credit_balance > 5000
-    ) {
-      alert("Customer already has high pending dues");
-      return;
+    if (totalPaid < grandTotal) {
+      if (!selectedCustomer) {
+        alert("Select customer for credit sale");
+        return;
+      }
+
+      const remainingCredit =
+        (selectedCustomer.credit_limit || 0) -
+        (selectedCustomer.credit_balance || 0);
+
+      const newCredit = grandTotal - totalPaid;
+
+      if (newCredit > remainingCredit) {
+        alert("Credit limit exceeded 🚫");
+        return;
+      }
     }
 
     setLoading(true);
@@ -215,7 +224,9 @@ function POSpage() {
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   useEffect(() => {
-    getCustomers().then(setCustomers);
+    getCustomers().then((res) => {
+      setCustomers(Array.isArray(res) ? res : []);
+    });
   }, []);
 
   const handleSelectCustomer = async (c: any) => {
@@ -303,7 +314,7 @@ function POSpage() {
           <div className="p-3 font-bold border-b">Products</div>
 
           <div className="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2">
-            {products.map((p) => (
+            {(products || []).map((p) => (
               <div
                 key={p.product_uuid}
                 className="border p-3 rounded cursor-pointer hover:bg-gray-100"
@@ -383,11 +394,12 @@ function POSpage() {
                 }}
               >
                 <option value="">Walk-in Customer</option>
-                {customers.map((c) => (
-                  <option key={c.customer_uuid} value={c.customer_uuid}>
-                    {c.name}
-                  </option>
-                ))}
+                {Array.isArray(customers) &&
+                  (customers || []).map((c) => (
+                    <option key={c.customer_uuid} value={c.customer_uuid}>
+                      {c.name}
+                    </option>
+                  ))}
               </select>
 
               <button

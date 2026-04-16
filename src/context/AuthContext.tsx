@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type User = {
   name: string;
@@ -8,11 +8,19 @@ type User = {
 const AuthContext = createContext<any>(null);
 
 export function AuthProvider({ children }: any) {
-  // 🔥 TEMP: hardcode user (later from API/login)
-  const [user, setUser] = useState<User>({
-    name: "Admin",
-    role: "owner",
-  });
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      // optionally decode token or fetch user
+      setUser({
+        name: "Admin",
+        role: "owner",
+      });
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>

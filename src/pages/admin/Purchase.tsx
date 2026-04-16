@@ -157,7 +157,7 @@ export default function PurchasePage() {
               }
             >
               <option value="">Product</option>
-              {products.map((p) => (
+              {(products || []).map((p) => (
                 <option key={p.product_uuid} value={p.product_uuid}>
                   {p.name}
                 </option>

@@ -7,7 +7,11 @@ export default function ProtectedRoute({
 }: any) {
   const { user } = useAuth();
 
-  if (!allowedRoles.includes(user.role)) {
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/pos" />;
   }
 

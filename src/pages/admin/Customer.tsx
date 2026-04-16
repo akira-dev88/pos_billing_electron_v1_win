@@ -13,29 +13,61 @@ export default function CustomerPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
+  const [editing, setEditing] = useState<any | null>(null);
+
   const [form, setForm] = useState({
     name: "",
     mobile: "",
     address: "",
     gstin: "",
+    credit_limit: 0,
   });
 
-  const [editing, setEditing] = useState<any | null>(null);
+  const [aging, setAging] = useState<any[]>([]);
+  const [reminders, setReminders] = useState<any[]>([]);
 
+  // 🔄 LOAD ALL DATA
   useEffect(() => {
-    load();
+    loadCustomers();
+    loadInsights();
   }, []);
 
-  const load = async () => {
-    const data = await getCustomers();
-    setCustomers(Array.isArray(data) ? data : []);
+  const loadCustomers = async () => {
+    try {
+      const data = await getCustomers();
+      setCustomers(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
+  const loadInsights = async () => {
+    try {
+      const [agingData, reminderData] = await Promise.all([
+        apiGet("/customers/aging"),
+        apiGet("/customers/reminders"),
+      ]);
+
+      setAging(Array.isArray(agingData) ? agingData : []);
+      setReminders(Array.isArray(reminderData) ? reminderData : []);
+    } catch (e) {
+      console.error("Insights error:", e);
+    }
+  };
+
+  // 🔁 RESET FORM
   const resetForm = () => {
-    setForm({ name: "", mobile: "", address: "", gstin: "" });
     setEditing(null);
+    setForm({
+      name: "",
+      mobile: "",
+      address: "",
+      gstin: "",
+      credit_limit: 0,
+    });
   };
 
+  // 💾 SAVE
   const handleSave = async () => {
     if (!form.name) return alert("Name required");
 
@@ -60,6 +92,7 @@ export default function CustomerPage() {
     }
   };
 
+  // ✏️ EDIT
   const handleEdit = (c: any) => {
     setEditing(c);
     setForm({
@@ -67,9 +100,11 @@ export default function CustomerPage() {
       mobile: c.mobile || "",
       address: c.address || "",
       gstin: c.gstin || "",
+      credit_limit: c.credit_limit || 0,
     });
   };
 
+  // ❌ DELETE
   const handleDelete = async (uuid: string) => {
     if (!confirm("Delete customer?")) return;
 
@@ -79,128 +114,167 @@ export default function CustomerPage() {
     );
   };
 
-  const [aging, setAging] = useState<any[]>([]);
-  const [reminders, setReminders] = useState<any[]>([]);
-
-  useEffect(() => {
-    load();
-    loadInsights();
-  }, []);
-
-  const loadInsights = async () => {
-    try {
-      const [agingData, reminderData] = await Promise.all([
-        apiGet("/customers/aging"),
-        apiGet("/customers/reminders"),
-      ]);
-
-      setAging(Array.isArray(agingData) ? agingData : []);
-      setReminders(Array.isArray(reminderData) ? reminderData : []);
-    } catch (e) {
-      console.error("Insights error:", e);
-    }
-  };
-
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+
+      {/* 🔷 HEADER */}
       <h1 className="text-2xl font-bold">Customers</h1>
 
-      {/* FORM */}
-      <div className="bg-white p-4 rounded shadow space-y-2">
-        <h2 className="font-semibold">
-          {editing ? "Edit Customer" : "Add Customer"}
-        </h2>
+      {/* 🔷 MAIN GRID */}
+      <div className="grid grid-cols-3 gap-6">
 
-        <input
-          className="border p-2 w-full"
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        {/* 🧾 LEFT: FORM */}
+        <div className="bg-white p-4 rounded shadow space-y-3">
+          <h2 className="font-semibold">
+            {editing ? "Edit Customer" : "Add Customer"}
+          </h2>
 
-        <input
-          className="border p-2 w-full"
-          placeholder="Mobile"
-          value={form.mobile}
-          onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-        />
+          <input
+            placeholder="Name"
+            className="border p-2 w-full"
+            value={form.name}
+            onChange={(e) =>
+              setForm({ ...form, name: e.target.value })
+            }
+          />
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleSave}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            {editing ? "Update" : "Create"}
-          </button>
+          <input
+            placeholder="Mobile"
+            className="border p-2 w-full"
+            value={form.mobile}
+            onChange={(e) =>
+              setForm({ ...form, mobile: e.target.value })
+            }
+          />
 
-          {editing && (
+          <input
+            placeholder="Address"
+            className="border p-2 w-full"
+            value={form.address}
+            onChange={(e) =>
+              setForm({ ...form, address: e.target.value })
+            }
+          />
+
+          <input
+            placeholder="GSTIN"
+            className="border p-2 w-full"
+            value={form.gstin}
+            onChange={(e) =>
+              setForm({ ...form, gstin: e.target.value })
+            }
+          />
+
+          {/* ✅ CREDIT LIMIT */}
+          <input
+            type="number"
+            placeholder="Credit Limit"
+            className="border p-2 w-full"
+            value={form.credit_limit}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                credit_limit: Number(e.target.value),
+              })
+            }
+          />
+
+          <div className="flex gap-2">
             <button
-              onClick={resetForm}
-              className="bg-gray-300 px-4 py-2 rounded"
+              onClick={handleSave}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
             >
-              Cancel
+              {editing ? "Update" : "Create"}
             </button>
+
+            {editing && (
+              <button
+                onClick={resetForm}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 📋 CENTER: CUSTOMER LIST */}
+        <div className="bg-white rounded shadow col-span-2">
+          {customers.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              No customers
+            </div>
+          ) : (
+            (customers || []).map((c) => {
+              const availableCredit =
+                (c.credit_limit || 0) - (c.credit_balance || 0);
+
+              return (
+                <div
+                  key={c.customer_uuid}
+                  className="flex justify-between items-center border-b p-3"
+                >
+                  <div>
+                    <div className="font-semibold">{c.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {c.mobile}
+                    </div>
+
+                    {/* 💰 CREDIT INFO */}
+                    <div className="text-xs mt-1">
+                      Credit:
+                      <span
+                        className={`ml-1 font-semibold ${
+                          c.credit_balance > c.credit_limit
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        ₹{c.credit_balance || 0} / ₹{c.credit_limit || 0}
+                      </span>
+                    </div>
+
+                    {/* 🧠 AVAILABLE CREDIT */}
+                    <div className="text-xs text-gray-500">
+                      Available: ₹{availableCredit}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 text-sm">
+                    <button
+                      onClick={() => setSelectedCustomer(c)}
+                      className="text-blue-600"
+                    >
+                      Ledger
+                    </button>
+
+                    <button
+                      onClick={() => handleEdit(c)}
+                      className="text-gray-700"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(c.customer_uuid)}
+                      className="text-red-600"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* LIST */}
-      <div className="bg-white rounded shadow">
-        {customers.map((c) => (
-          <div
-            key={c.customer_uuid}
-            className="flex justify-between items-center border-b p-3"
-          >
-            <div>
-              <div className="font-semibold">{c.name}</div>
-              <div className="text-xs text-gray-500">{c.mobile}</div>
+      {/* 🔥 INSIGHTS */}
+      <div className="grid grid-cols-2 gap-6">
 
-              <div className="text-xs mt-1">
-                Credit:
-                <span
-                  className={`ml-1 font-semibold ${c.credit_balance > 0
-                    ? "text-red-600"
-                    : "text-green-600"
-                    }`}
-                >
-                  ₹{c.credit_balance || 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 text-sm">
-              <button
-                onClick={() => setSelectedCustomer(c)}
-                className="text-blue-600"
-              >
-                Ledger
-              </button>
-
-              <button
-                onClick={() => handleEdit(c)}
-                className="text-gray-700"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => handleDelete(c.customer_uuid)}
-                className="text-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 🔥 INSIGHTS SECTION */}
-      <div className="grid grid-cols-2 gap-4">
-
-        {/* 📊 CREDIT AGING */}
+        {/* 📊 AGING */}
         <div className="bg-white p-4 rounded shadow">
-          <h2 className="font-semibold mb-2">Credit Aging</h2>
+          <h2 className="font-semibold mb-3">Credit Aging</h2>
 
           {aging.length === 0 ? (
             <div className="text-sm text-gray-500">No data</div>
@@ -222,28 +296,34 @@ export default function CustomerPage() {
           )}
         </div>
 
-        {/* 🔔 PAYMENT REMINDERS */}
+        {/* 🔔 REMINDERS */}
         <div className="bg-white p-4 rounded shadow">
-          <h2 className="font-semibold mb-2 text-red-600">
+          <h2 className="font-semibold mb-3 text-red-600">
             Payment Reminders
           </h2>
 
           {reminders.length === 0 ? (
-            <div className="text-sm text-gray-500">No pending dues</div>
+            <div className="text-sm text-gray-500">
+              No pending dues
+            </div>
           ) : (
             reminders.map((r: any, i) => (
-              <div key={i} className="flex justify-between text-sm py-1 border-b">
+              <div
+                key={i}
+                className="flex justify-between text-sm py-1 border-b"
+              >
                 <span>{r.name}</span>
                 <span>₹{r.due}</span>
-                <span className="text-red-500">{r.days} days</span>
+                <span className="text-red-500">
+                  {r.days} days
+                </span>
               </div>
             ))
           )}
         </div>
-
       </div>
 
-      {/* LEDGER MODAL */}
+      {/* 📊 LEDGER MODAL */}
       {selectedCustomer && (
         <CustomerLedgerModal
           customer={selectedCustomer}
