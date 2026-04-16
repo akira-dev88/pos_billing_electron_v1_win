@@ -323,6 +323,12 @@ function POSpage() {
           {/* Cart Header */}
           <div className="p-3 font-bold border-b">Cart</div>
 
+          <div className="mb-4">
+            <div className="text-xl font-bold">My Store</div>
+            <div className="text-xs">GSTIN: 33ABCDE1234F1Z5</div>
+            <div className="text-xs">Chennai, Tamil Nadu</div>
+          </div>
+
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {cartData?.cart?.items?.map((item: any) => (

@@ -1,9 +1,4 @@
-import React from "react";
-
-export default function CustomerStatement({
-  customer,
-  ledger,
-}: any) {
+export default function CustomerStatement({ customer, ledger }: any) {
   const totalDebit = ledger
     .filter((l: any) => l.type === "sale")
     .reduce((sum: number, l: any) => sum + Number(l.amount), 0);
@@ -13,16 +8,14 @@ export default function CustomerStatement({
     .reduce((sum: number, l: any) => sum + Number(l.amount), 0);
 
   return (
-    <div className="p-6 text-sm print:text-black">
+    <div className="p-6 text-sm">
+      <h1 className="text-xl font-bold mb-2">Customer Statement</h1>
 
-      {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl font-bold">Customer Statement</h1>
         <div>{customer.name}</div>
         <div>{customer.mobile}</div>
       </div>
 
-      {/* Summary */}
       <div className="mb-4">
         <div>Total Sales: ₹{totalDebit}</div>
         <div>Total Payments: ₹{totalCredit}</div>
@@ -31,14 +24,13 @@ export default function CustomerStatement({
         </div>
       </div>
 
-      {/* Ledger Table */}
       <table className="w-full border text-xs">
         <thead>
           <tr className="border-b">
-            <th className="text-left p-2">Date</th>
-            <th className="text-left p-2">Type</th>
-            <th className="text-left p-2">Note</th>
-            <th className="text-right p-2">Amount</th>
+            <th className="p-2">Date</th>
+            <th className="p-2">Type</th>
+            <th className="p-2">Note</th>
+            <th className="p-2 text-right">Amount</th>
           </tr>
         </thead>
 
@@ -48,7 +40,7 @@ export default function CustomerStatement({
               <td className="p-2">
                 {new Date(l.created_at).toLocaleDateString()}
               </td>
-              <td className="p-2 capitalize">{l.type}</td>
+              <td className="p-2">{l.type}</td>
               <td className="p-2">{l.note}</td>
               <td className="p-2 text-right">
                 ₹{Number(l.amount).toFixed(2)}
@@ -57,7 +49,6 @@ export default function CustomerStatement({
           ))}
         </tbody>
       </table>
-
     </div>
   );
 }

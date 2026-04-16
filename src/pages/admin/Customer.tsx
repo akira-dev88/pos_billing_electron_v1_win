@@ -6,7 +6,8 @@ import {
   deleteCustomer,
 } from "../../renderer/services/customerApi";
 
-import CustomerLedgerPage from "./CustomerLedgerPage";
+import CustomerLedgerModal from "./CustomerLedgerPage";
+import { apiGet } from "../../renderer/services/api";
 
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -30,38 +31,35 @@ export default function CustomerPage() {
     setCustomers(Array.isArray(data) ? data : []);
   };
 
-  // ✅ CREATE / UPDATE
+  const resetForm = () => {
+    setForm({ name: "", mobile: "", address: "", gstin: "" });
+    setEditing(null);
+  };
+
   const handleSave = async () => {
     if (!form.name) return alert("Name required");
 
     try {
       if (editing) {
-        const updated = await updateCustomer(
-          editing.customer_uuid,
-          form
-        );
+        const updated = await updateCustomer(editing.customer_uuid, form);
 
         setCustomers((prev) =>
           prev.map((c) =>
             c.customer_uuid === updated.customer_uuid ? updated : c
           )
         );
-
-        setEditing(null);
       } else {
         const created = await createCustomer(form);
         setCustomers((prev) => [created, ...prev]);
       }
 
-      setForm({ name: "", mobile: "", address: "", gstin: "" });
-
+      resetForm();
     } catch (e) {
       console.error(e);
       alert("Save failed");
     }
   };
 
-  // ✅ EDIT
   const handleEdit = (c: any) => {
     setEditing(c);
     setForm({
@@ -72,7 +70,6 @@ export default function CustomerPage() {
     });
   };
 
-  // ✅ DELETE
   const handleDelete = async (uuid: string) => {
     if (!confirm("Delete customer?")) return;
 
@@ -82,52 +79,51 @@ export default function CustomerPage() {
     );
   };
 
+  const [aging, setAging] = useState<any[]>([]);
+  const [reminders, setReminders] = useState<any[]>([]);
+
+  useEffect(() => {
+    load();
+    loadInsights();
+  }, []);
+
+  const loadInsights = async () => {
+    try {
+      const [agingData, reminderData] = await Promise.all([
+        apiGet("/customers/aging"),
+        apiGet("/customers/reminders"),
+      ]);
+
+      setAging(Array.isArray(agingData) ? agingData : []);
+      setReminders(Array.isArray(reminderData) ? reminderData : []);
+    } catch (e) {
+      console.error("Insights error:", e);
+    }
+  };
+
+
   return (
     <div className="space-y-4">
-
-      {/* 🔷 HEADER */}
       <h1 className="text-2xl font-bold">Customers</h1>
 
-      {/* 🔷 FORM */}
+      {/* FORM */}
       <div className="bg-white p-4 rounded shadow space-y-2">
         <h2 className="font-semibold">
           {editing ? "Edit Customer" : "Add Customer"}
         </h2>
 
         <input
+          className="border p-2 w-full"
           placeholder="Name"
-          className="border p-2 w-full"
           value={form.name}
-          onChange={(e) =>
-            setForm({ ...form, name: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
 
         <input
+          className="border p-2 w-full"
           placeholder="Mobile"
-          className="border p-2 w-full"
           value={form.mobile}
-          onChange={(e) =>
-            setForm({ ...form, mobile: e.target.value })
-          }
-        />
-
-        <input
-          placeholder="Address"
-          className="border p-2 w-full"
-          value={form.address}
-          onChange={(e) =>
-            setForm({ ...form, address: e.target.value })
-          }
-        />
-
-        <input
-          placeholder="GSTIN"
-          className="border p-2 w-full"
-          value={form.gstin}
-          onChange={(e) =>
-            setForm({ ...form, gstin: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, mobile: e.target.value })}
         />
 
         <div className="flex gap-2">
@@ -140,15 +136,7 @@ export default function CustomerPage() {
 
           {editing && (
             <button
-              onClick={() => {
-                setEditing(null);
-                setForm({
-                  name: "",
-                  mobile: "",
-                  address: "",
-                  gstin: "",
-                });
-              }}
+              onClick={resetForm}
               className="bg-gray-300 px-4 py-2 rounded"
             >
               Cancel
@@ -157,110 +145,110 @@ export default function CustomerPage() {
         </div>
       </div>
 
-      {/* 🔷 LIST */}
+      {/* LIST */}
       <div className="bg-white rounded shadow">
-        {customers.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            No customers found
-          </div>
-        ) : (
-          customers.map((c) => (
-            <div
-              key={c.customer_uuid}
-              className="flex justify-between items-center border-b p-3"
-            >
-              {/* LEFT */}
-              <div>
-                <div className="font-semibold">{c.name}</div>
-                <div className="text-xs text-gray-500">
-                  {c.mobile}
-                </div>
+        {customers.map((c) => (
+          <div
+            key={c.customer_uuid}
+            className="flex justify-between items-center border-b p-3"
+          >
+            <div>
+              <div className="font-semibold">{c.name}</div>
+              <div className="text-xs text-gray-500">{c.mobile}</div>
 
-                {/* 💰 CREDIT */}
-                <div className="text-xs mt-1">
-                  Credit:
-                  <span
-                    className={`ml-1 font-semibold ${
-                      c.credit_balance > 0
-                        ? "text-red-600"
-                        : "text-green-600"
+              <div className="text-xs mt-1">
+                Credit:
+                <span
+                  className={`ml-1 font-semibold ${c.credit_balance > 0
+                    ? "text-red-600"
+                    : "text-green-600"
                     }`}
-                  >
-                    ₹{c.credit_balance || 0}
-                  </span>
-                </div>
-              </div>
-
-              {/* RIGHT */}
-              <div className="flex gap-3 text-sm">
-                <button
-                  onClick={() => setSelectedCustomer(c)}
-                  className="text-blue-600"
                 >
-                  Ledger
-                </button>
-
-                <button
-                  onClick={() => handleEdit(c)}
-                  className="text-gray-700"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleDelete(c.customer_uuid)}
-                  className="text-red-600"
-                >
-                  Delete
-                </button>
+                  ₹{c.credit_balance || 0}
+                </span>
               </div>
             </div>
-          ))
-        )}
-      </div>
 
-      {/* 🔷 LEDGER MODAL */}
-      {selectedCustomer && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-          <div className="bg-white rounded shadow w-[700px] max-h-[80vh] flex flex-col">
-
-            {/* HEADER */}
-            <div className="flex justify-between items-center p-4 border-b">
-              <div>
-                <div className="font-bold text-lg">
-                  {selectedCustomer.name}
-                </div>
-
-                <div className="text-xs text-gray-500">
-                  Credit:
-                  <span
-                    className={`ml-1 font-semibold ${
-                      selectedCustomer.credit_balance > 0
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    ₹{selectedCustomer.credit_balance || 0}
-                  </span>
-                </div>
-              </div>
+            <div className="flex gap-3 text-sm">
+              <button
+                onClick={() => setSelectedCustomer(c)}
+                className="text-blue-600"
+              >
+                Ledger
+              </button>
 
               <button
-                onClick={() => setSelectedCustomer(null)}
-                className="text-gray-600"
+                onClick={() => handleEdit(c)}
+                className="text-gray-700"
               >
-                ✕
+                Edit
+              </button>
+
+              <button
+                onClick={() => handleDelete(c.customer_uuid)}
+                className="text-red-600"
+              >
+                Delete
               </button>
             </div>
-
-            {/* CONTENT */}
-            <div className="p-4 overflow-y-auto flex-1">
-              <CustomerLedgerPage customer={selectedCustomer} />
-            </div>
-
           </div>
+        ))}
+      </div>
+
+      {/* 🔥 INSIGHTS SECTION */}
+      <div className="grid grid-cols-2 gap-4">
+
+        {/* 📊 CREDIT AGING */}
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="font-semibold mb-2">Credit Aging</h2>
+
+          {aging.length === 0 ? (
+            <div className="text-sm text-gray-500">No data</div>
+          ) : (
+            aging.map((c, i) => (
+              <div key={i} className="border-b py-2 text-sm">
+                <div className="font-semibold">{c.name}</div>
+
+                <div className="grid grid-cols-4 text-xs mt-1">
+                  <span>0-30: ₹{c.aging["0_30"]}</span>
+                  <span>31-60: ₹{c.aging["31_60"]}</span>
+                  <span>61-90: ₹{c.aging["61_90"]}</span>
+                  <span className="text-red-600">
+                    90+: ₹{c.aging["90_plus"]}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
+
+        {/* 🔔 PAYMENT REMINDERS */}
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="font-semibold mb-2 text-red-600">
+            Payment Reminders
+          </h2>
+
+          {reminders.length === 0 ? (
+            <div className="text-sm text-gray-500">No pending dues</div>
+          ) : (
+            reminders.map((r: any, i) => (
+              <div key={i} className="flex justify-between text-sm py-1 border-b">
+                <span>{r.name}</span>
+                <span>₹{r.due}</span>
+                <span className="text-red-500">{r.days} days</span>
+              </div>
+            ))
+          )}
+        </div>
+
+      </div>
+
+      {/* LEDGER MODAL */}
+      {selectedCustomer && (
+        <CustomerLedgerModal
+          customer={selectedCustomer}
+          onClose={() => setSelectedCustomer(null)}
+        />
       )}
     </div>
   );
