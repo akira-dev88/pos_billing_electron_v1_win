@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "../../layout/AdminLayout";
 import {
   getProducts,
   createProduct,
@@ -10,6 +9,8 @@ import {
 export default function Products() {
   const [products, setProducts] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,58 +18,90 @@ export default function Products() {
     stock: "",
   });
 
+  // 📦 LOAD
   const loadProducts = async () => {
-    const data = await getProducts();
-    setProducts(data);
+    try {
+      setLoading(true);
+      const data = await getProducts();
+      setProducts(data || []);
+    } catch (e) {
+      console.error(e);
+      setProducts([]);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
     loadProducts();
   }, []);
 
-  // ➕ Create / Update
+  // ➕ CREATE / UPDATE
   const handleSubmit = async () => {
     if (!form.name || !form.price) {
       alert("Name & Price required");
       return;
     }
 
-    if (editing) {
-      await updateProduct(editing.product_uuid, {
+    setSaving(true);
+
+    try {
+      const payload = {
         ...form,
         price: Number(form.price),
-        stock: Number(form.stock),
-      });
-    } else {
-      await createProduct({
-        ...form,
-        price: Number(form.price),
-        stock: Number(form.stock),
-      });
+        stock: Number(form.stock || 0),
+      };
+
+      if (editing) {
+        await updateProduct(editing.product_uuid, payload);
+      } else {
+        await createProduct(payload);
+      }
+
+      // reset
+      setForm({ name: "", price: "", stock: "" });
+      setEditing(null);
+
+      await loadProducts();
+    } catch (e) {
+      console.error(e);
+      alert("Save failed");
     }
 
-    setForm({ name: "", price: "", stock: "" });
-    setEditing(null);
-    loadProducts();
+    setSaving(false);
   };
 
-  // ✏️ Edit
+  // ✏️ EDIT
   const handleEdit = (p: any) => {
     setEditing(p);
     setForm({
-      name: p.name,
-      price: p.price,
-      stock: p.stock || 0,
+      name: p.name || "",
+      price: String(p.price || ""),
+      stock: String(p.stock || 0),
     });
   };
 
-  // 🗑 Delete
+  // ❌ CANCEL EDIT
+  const handleCancel = () => {
+    setEditing(null);
+    setForm({ name: "", price: "", stock: "" });
+  };
+
+  // 🗑 DELETE
   const handleDelete = async (uuid: string) => {
     if (!confirm("Delete this product?")) return;
 
-    await deleteProduct(uuid);
-    loadProducts();
+    try {
+      await deleteProduct(uuid);
+      await loadProducts();
+    } catch (e) {
+      console.error(e);
+      alert("Delete failed");
+    }
   };
+
+  if (loading) {
+    return <div className="p-4">Loading products...</div>;
+  }
 
   return (
     <div>
@@ -100,15 +133,30 @@ export default function Products() {
           onChange={(e) => setForm({ ...form, stock: e.target.value })}
         />
 
-        <button
-          onClick={handleSubmit}
-          className={`col-span-3 p-2 text-white ${
-            editing ? "bg-yellow-600" : "bg-blue-600"
-          }`}
-        >
-          {editing ? "Update Product" : "Add Product"}
-        </button>
+        <div className="col-span-3 flex gap-2">
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className={`flex-1 p-2 text-white ${
+              editing ? "bg-yellow-600" : "bg-blue-600"
+            } ${saving ? "opacity-50" : ""}`}
+          >
+            {saving
+              ? "Saving..."
+              : editing
+              ? "Update Product"
+              : "Add Product"}
+          </button>
 
+          {editing && (
+            <button
+              onClick={handleCancel}
+              className="bg-gray-500 text-white px-4"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 📦 PRODUCT LIST */}
@@ -153,9 +201,7 @@ export default function Products() {
             No products found
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

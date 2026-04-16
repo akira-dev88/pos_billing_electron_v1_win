@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
-import AdminLayout from "../../layout/AdminLayout";
 import { getStock, updateStock } from "../../renderer/services/stockApi";
 
 export default function Stock() {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
   const [newStock, setNewStock] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   const loadStock = async () => {
-    const data = await getStock();
-    setItems(data);
-    
+    try {
+      const data = await getStock();
+      setItems(data || []);
+    } catch (e) {
+      console.error(e);
+      setItems([]);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -18,11 +23,18 @@ export default function Stock() {
   }, []);
 
   const handleUpdate = async (uuid: string) => {
-    await updateStock(uuid, newStock);
-    setEditing(null);
-    setNewStock(0);
-    loadStock();
+    try {
+      await updateStock(uuid, newStock);
+      setEditing(null);
+      setNewStock(0);
+      loadStock();
+    } catch (e) {
+      console.error(e);
+      alert("Update failed");
+    }
   };
+
+  if (loading) return <div className="p-4">Loading stock...</div>;
 
   return (
     <div>
@@ -43,28 +55,25 @@ export default function Stock() {
 
           return (
             <div
-              key={item.name}
+              key={item.product_uuid}
               className="grid grid-cols-4 p-3 border-b items-center"
             >
               <span>{item.name}</span>
 
-              {/* Stock */}
               <span className={isLow ? "text-red-600 font-bold" : ""}>
                 {item.stock}
               </span>
 
-              {/* Status */}
               <span>
                 {isLow ? (
-                  <span className="text-red-500">Low Stock</span>
+                  <span className="text-red-500">Low</span>
                 ) : (
                   <span className="text-green-600">OK</span>
                 )}
               </span>
 
-              {/* Actions */}
               <div>
-                {editing === item.name ? (
+                {editing === item.product_uuid ? (
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -85,7 +94,7 @@ export default function Stock() {
                 ) : (
                   <button
                     onClick={() => {
-                      setEditing(item.name);
+                      setEditing(item.product_uuid);
                       setNewStock(item.stock);
                     }}
                     className="bg-yellow-500 text-white px-2"
