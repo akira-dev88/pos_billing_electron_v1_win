@@ -11,6 +11,7 @@ import {
   closeOutline,
   cubeOutline,
   trendingUpOutline,
+  searchOutline,
 } from "ionicons/icons";
 
 export default function Stock() {
@@ -20,12 +21,24 @@ export default function Stock() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "low" | "ok">("all");
+  const [error, setError] = useState<string | null>(null);
 
   const loadStock = async () => {
-    setLoading(true);
-    const data = await getStock();
-    setItems(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getStock();
+      
+      // Ensure data is an array
+      const stockData = Array.isArray(data) ? data : [];
+      setItems(stockData);
+    } catch (err: any) {
+      console.error("Stock load error:", err);
+      setError(err.message || "Failed to load stock data");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -33,29 +46,59 @@ export default function Stock() {
   }, []);
 
   const handleUpdate = async (uuid: string) => {
-    setLoading(true);
-    await updateStock(uuid, newStock);
-    setEditing(null);
-    setNewStock(0);
-    await loadStock();
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      await updateStock(uuid, newStock);
+      setEditing(null);
+      setNewStock(0);
+      await loadStock();
+    } catch (err: any) {
+      console.error("Stock update error:", err);
+      setError(err.message || "Failed to update stock");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Calculate stats
+  // Calculate stats safely
   const totalProducts = items.length;
-  const lowStockCount = items.filter((item) => item.stock < 10).length;
-  const outOfStockCount = items.filter((item) => item.stock === 0).length;
-  const totalStock = items.reduce((sum, item) => sum + (item.stock || 0), 0);
+  const lowStockCount = items.filter((item) => item && item.stock < 10 && item.stock > 0).length;
+  const outOfStockCount = items.filter((item) => item && item.stock === 0).length;
+  const totalStock = items.reduce((sum, item) => sum + (item?.stock || 0), 0);
 
-  // Filter items
+  // Filter items safely
   const filteredItems = items.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!item) return false;
+    const matchesSearch = item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
     const matchesStatus =
       filterStatus === "all" ? true :
-      filterStatus === "low" ? item.stock < 10 :
+      filterStatus === "low" ? item.stock < 10 && item.stock > 0 :
       item.stock >= 10;
     return matchesSearch && matchesStatus;
   });
+
+  if (error) {
+    return (
+      <div className="space-y-6 font-inter">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-white">Stock Management</h1>
+          <button
+            onClick={loadStock}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+          >
+            <IonIcon icon={refreshOutline} className="text-xl" />
+            <span>Retry</span>
+          </button>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+          <IonIcon icon={warningOutline} className="text-5xl text-red-500 mx-auto mb-4" />
+          <p className="text-red-700 font-medium">{error}</p>
+          <p className="text-red-600 text-sm mt-2">Please check your connection and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 font-inter">
@@ -63,6 +106,7 @@ export default function Stock() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-white font-inter">Stock Management</h1>
+          <p className="text-gray-500 text-sm mt-1">Track and manage your inventory levels</p>
         </div>
         <button
           onClick={loadStock}
@@ -135,7 +179,7 @@ export default function Stock() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-            🔍
+            <IonIcon icon={searchOutline} className="text-2xl" />
           </div>
         </div>
 
@@ -190,19 +234,21 @@ export default function Stock() {
                 <tr>
                   <td colSpan={4} className="text-center p-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                  </td>
-                </tr>
+                    <p className="text-gray-500 mt-2">Loading stock data...</p>
+                   </td>
+                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center p-8 text-gray-500">
                     {searchTerm ? "No products match your search" : "No stock data available"}
-                  </td>
-                </tr>
+                   </td>
+                 </tr>
               ) : (
                 filteredItems.map((item) => {
-                  const isLow = item.stock < 10;
-                  const isOut = item.stock === 0;
-                  const stockPercentage = Math.min((item.stock / 50) * 100, 100);
+                  const stock = item?.stock || 0;
+                  const isLow = stock < 10 && stock > 0;
+                  const isOut = stock === 0;
+                  const stockPercentage = Math.min((stock / 50) * 100, 100);
 
                   return (
                     <tr
@@ -211,7 +257,7 @@ export default function Stock() {
                     >
                       <td className="p-4">
                         <div>
-                          <div className="font-medium text-gray-800">{item.name}</div>
+                          <div className="font-medium text-gray-800">{item.name || "Unknown"}</div>
                           {item.sku && (
                             <div className="text-xs text-gray-400 font-mono mt-0.5">SKU: {item.sku}</div>
                           )}
@@ -225,7 +271,7 @@ export default function Stock() {
                             isLow ? "text-orange-600" :
                             "text-green-600"
                           }`}>
-                            {item.stock}
+                            {stock}
                           </div>
                           {/* Progress Bar */}
                           <div className="w-32 ml-auto mt-2">
@@ -291,7 +337,7 @@ export default function Stock() {
                           <button
                             onClick={() => {
                               setEditing(item.product_uuid);
-                              setNewStock(item.stock);
+                              setNewStock(stock);
                             }}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                             title="Update Stock"

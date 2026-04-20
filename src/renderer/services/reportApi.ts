@@ -61,7 +61,29 @@ export async function getTopProducts() {
 
     if (!res.ok) throw new Error("Top products failed");
     const data = await res.json();
-    return Array.isArray(data) ? data : [];
+    
+    console.log("Top products raw response:", data);
+    
+    // Handle different response structures
+    // Case 1: { success: true, data: [...] }
+    if (data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+    // Case 2: Direct array
+    if (Array.isArray(data)) {
+      return data;
+    }
+    // Case 3: { data: [...] }
+    if (data.data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    // Case 4: { products: [...] }
+    if (data.products && Array.isArray(data.products)) {
+      return data.products;
+    }
+    // Default: return empty array
+    console.warn("Unexpected top products response structure:", data);
+    return [];
   } catch (error) {
     console.error("Top products API error:", error);
     return [];
@@ -76,7 +98,29 @@ export async function getStockReport() {
 
     if (!res.ok) throw new Error("Stock failed");
     const data = await res.json();
-    return data;
+    
+    console.log("Stock report raw response:", data);
+    
+    // Handle different response structures
+    // Case 1: { success: true, data: [...] }
+    if (data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+    // Case 2: Direct array
+    if (Array.isArray(data)) {
+      return data;
+    }
+    // Case 3: { data: [...] }
+    if (data.data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    // Case 4: { products: [...] }
+    if (data.products && Array.isArray(data.products)) {
+      return data.products;
+    }
+    // Default: return empty array
+    console.warn("Unexpected stock response structure:", data);
+    return [];
   } catch (error) {
     console.error("Stock report API error:", error);
     return [];
@@ -90,10 +134,41 @@ export async function getProfitReport() {
     });
 
     if (!res.ok) throw new Error("Profit failed");
-    return res.json();
+    const data = await res.json();
+    
+    console.log("Profit report raw response:", data);
+    
+    // Handle different response structures
+    // Case 1: { success: true, data: { revenue, cost, profit } }
+    if (data.success && data.data) {
+      return {
+        revenue: data.data.revenue || 0,
+        cost: data.data.cost || 0,
+        profit: data.data.profit || 0,
+      };
+    }
+    // Case 2: Direct object with revenue, cost, profit
+    if (data.revenue !== undefined || data.cost !== undefined || data.profit !== undefined) {
+      return {
+        revenue: data.revenue || 0,
+        cost: data.cost || 0,
+        profit: data.profit || 0,
+      };
+    }
+    // Default: return zeros
+    console.warn("Unexpected profit response structure:", data);
+    return {
+      revenue: 0,
+      cost: 0,
+      profit: 0,
+    };
   } catch (error) {
     console.error("Profit API error:", error);
-    throw error;
+    return {
+      revenue: 0,
+      cost: 0,
+      profit: 0,
+    };
   }
 }
 

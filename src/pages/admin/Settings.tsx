@@ -30,7 +30,13 @@ export default function Settings() {
     setError(null);
     try {
       const res = await getSettings();
-      if (!res || Object.keys(res).length === 0) {
+      console.log("Settings loaded:", res);
+      
+      // Check if response has data
+      if (res && Object.keys(res).length > 0) {
+        setData(res);
+      } else {
+        // Set default values if no settings exist
         setData({
           shop_name: "",
           mobile: "",
@@ -42,6 +48,7 @@ export default function Settings() {
     } catch (err) {
       console.error("Load settings error:", err);
       setError("Failed to load settings");
+      // Set default values on error
       setData({
         shop_name: "",
         mobile: "",
@@ -55,7 +62,7 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
-    if (!data.shop_name) {
+    if (!data?.shop_name) {
       setError("Shop name is required");
       return;
     }
@@ -86,6 +93,25 @@ export default function Settings() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-500">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+            <IonIcon icon={warningOutline} className="text-5xl text-red-500 mx-auto mb-4" />
+            <p className="text-red-700">Failed to load settings</p>
+            <button
+              onClick={loadSettings}
+              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition-all"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -159,7 +185,7 @@ export default function Settings() {
                 <input
                   placeholder="Enter your shop name"
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  value={data.shop_name}
+                  value={data.shop_name || ""}
                   onChange={(e) => setData({ ...data, shop_name: e.target.value })}
                 />
                 <p className="text-xs text-gray-500 mt-1">
