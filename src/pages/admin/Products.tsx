@@ -1,207 +1,526 @@
 import { useEffect, useState } from "react";
 import {
-  getProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} from "../../renderer/services/productApi";
+  getSuppliers,
+  createSupplier,
+  updateSupplier,
+  deleteSupplier,
+  type Supplier,
+} from "../../renderer/services/supplierApi";
+import { IonIcon } from "@ionic/react";
+import {
+  addOutline,
+  createOutline,
+  trashOutline,
+  searchOutline,
+  closeOutline,
+  peopleOutline,
+  callOutline,
+  mailOutline,
+  locationOutline,
+  checkmarkCircleOutline,
+} from "ionicons/icons";
 
-export default function Products() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [editing, setEditing] = useState<any | null>(null);
+export default function SupplierPage() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
-    price: "",
-    stock: "",
+    phone: "",
+    email: "",
+    address: "",
   });
 
-  // 📦 LOAD
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const data = await getProducts();
-      setProducts(data || []);
-    } catch (e) {
-      console.error(e);
-      setProducts([]);
-    }
-    setLoading(false);
-  };
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Supplier>>({});
 
   useEffect(() => {
-    loadProducts();
+    loadSuppliers();
   }, []);
 
-  // ➕ CREATE / UPDATE
-  const handleSubmit = async () => {
-    if (!form.name || !form.price) {
-      alert("Name & Price required");
-      return;
-    }
-
-    setSaving(true);
-
+  const loadSuppliers = async () => {
     try {
-      const payload = {
-        ...form,
-        price: Number(form.price),
-        stock: Number(form.stock || 0),
-      };
-
-      if (editing) {
-        await updateProduct(editing.product_uuid, payload);
-      } else {
-        await createProduct(payload);
-      }
-
-      // reset
-      setForm({ name: "", price: "", stock: "" });
-      setEditing(null);
-
-      await loadProducts();
+      setLoading(true);
+      const data = await getSuppliers();
+      setSuppliers(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error(e);
-      alert("Save failed");
+      console.error("Supplier load error:", e);
+      setSuppliers([]);
+    } finally {
+      setLoading(false);
     }
-
-    setSaving(false);
   };
 
-  // ✏️ EDIT
-  const handleEdit = (p: any) => {
-    setEditing(p);
-    setForm({
-      name: p.name || "",
-      price: String(p.price || ""),
-      stock: String(p.stock || 0),
+  // ➕ CREATE
+  const handleCreate = async () => {
+    if (!form.name.trim()) return;
+
+    setLoading(true);
+    try {
+      const newSupplier = await createSupplier(form);
+      setSuppliers((prev) => [...prev, newSupplier]);
+      setForm({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+      });
+      setShowForm(false);
+      await loadSuppliers();
+    } catch (e) {
+      console.error("Create supplier error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✏️ START EDIT
+  const startEdit = (s: Supplier) => {
+    setEditingId(s.supplier_uuid);
+    setEditForm({
+      name: s.name,
+      phone: s.phone,
+      email: s.email,
+      address: s.address,
     });
   };
 
-  // ❌ CANCEL EDIT
-  const handleCancel = () => {
-    setEditing(null);
-    setForm({ name: "", price: "", stock: "" });
-  };
-
-  // 🗑 DELETE
-  const handleDelete = async (uuid: string) => {
-    if (!confirm("Delete this product?")) return;
-
+  // 💾 SAVE EDIT
+  const handleUpdate = async (id: string) => {
+    setLoading(true);
     try {
-      await deleteProduct(uuid);
-      await loadProducts();
+      const updated = await updateSupplier(id, editForm);
+      setSuppliers((prev) =>
+        prev.map((s) => (s.supplier_uuid === id ? updated : s))
+      );
+      setEditingId(null);
+      setEditForm({});
     } catch (e) {
-      console.error(e);
-      alert("Delete failed");
+      console.error("Update supplier error:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return <div className="p-4">Loading products...</div>;
-  }
+  // ❌ DELETE
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this supplier?")) return;
+
+    setLoading(true);
+    try {
+      await deleteSupplier(id);
+      await loadSuppliers();
+    } catch (e) {
+      console.error("Delete supplier error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter suppliers based on search
+  const filteredSuppliers = suppliers.filter((s) =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.phone?.includes(searchTerm)
+  );
+
+  // Stats
+  const totalSuppliers = suppliers.length;
+  const suppliersWithEmail = suppliers.filter((s) => s.email).length;
+  const suppliersWithPhone = suppliers.filter((s) => s.phone).length;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Products</h1>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div className="font-inter text-start">
+          <h1 className="text-3xl font-bold text-white font-inter">Suppliers</h1>
+          <p className="text-gray-500 text-sm font-inter">
+            Manage your supplier relationships
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setForm({
+              name: "",
+              phone: "",
+              email: "",
+              address: "",
+            });
+            setShowForm(!showForm);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl"
+        >
+          <IonIcon icon={addOutline} className="text-xl" />
+          <span>Add Supplier</span>
+        </button>
+      </div>
 
-      {/* 🧾 FORM */}
-      <div className="bg-white p-4 rounded shadow mb-4 grid grid-cols-3 gap-2">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
+          <div className="flex justify-between items-start">
+            <div className="text-start">
+              <p className="text-purple-100 text-sm">Total Suppliers</p>
+              <p className="text-3xl font-bold mt-1">{totalSuppliers}</p>
+            </div>
+            <div className="bg-white/20 p-2 rounded-lg">
+              <IonIcon icon={peopleOutline} className="text-2xl" />
+            </div>
+          </div>
+        </div>
 
-        <input
-          className="border p-2"
-          placeholder="Product Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white">
+          <div className="flex justify-between items-start">
+            <div className="text-start">
+              <p className="text-green-100 text-sm">With Email</p>
+              <p className="text-3xl font-bold mt-1">{suppliersWithEmail}</p>
+            </div>
+            <div className="bg-white/20 p-2 rounded-lg">
+              <IonIcon icon={mailOutline} className="text-2xl" />
+            </div>
+          </div>
+        </div>
 
-        <input
-          type="number"
-          className="border p-2"
-          placeholder="Price"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-        />
-
-        <input
-          type="number"
-          className="border p-2"
-          placeholder="Stock"
-          value={form.stock}
-          onChange={(e) => setForm({ ...form, stock: e.target.value })}
-        />
-
-        <div className="col-span-3 flex gap-2">
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className={`flex-1 p-2 text-white ${
-              editing ? "bg-yellow-600" : "bg-blue-600"
-            } ${saving ? "opacity-50" : ""}`}
-          >
-            {saving
-              ? "Saving..."
-              : editing
-              ? "Update Product"
-              : "Add Product"}
-          </button>
-
-          {editing && (
-            <button
-              onClick={handleCancel}
-              className="bg-gray-500 text-white px-4"
-            >
-              Cancel
-            </button>
-          )}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+          <div className="flex justify-between items-start">
+            <div className="text-start">
+              <p className="text-blue-100 text-sm">With Phone</p>
+              <p className="text-3xl font-bold mt-1">{suppliersWithPhone}</p>
+            </div>
+            <div className="bg-white/20 p-2 rounded-lg">
+              <IonIcon icon={callOutline} className="text-2xl" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 📦 PRODUCT LIST */}
-      <div className="bg-white rounded shadow">
+      {/* Search Bar */}
+      <div className="relative">
+        <IonIcon
+          icon={searchOutline}
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"
+        />
+        <input
+          type="text"
+          placeholder="Search suppliers by name, email, or phone..."
+          className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-        <div className="grid grid-cols-4 p-3 border-b font-semibold">
-          <span>Name</span>
-          <span>Price</span>
-          <span>Stock</span>
-          <span>Actions</span>
-        </div>
-
-        {(products || []).map((p) => (
-          <div
-            key={p.product_uuid}
-            className="grid grid-cols-4 p-3 border-b items-center"
-          >
-            <span>{p.name}</span>
-            <span>₹{p.price}</span>
-            <span>{p.stock ?? "-"}</span>
-
-            <div className="flex gap-2">
+      {/* Add/Edit Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">
+                Add New Supplier
+              </h2>
               <button
-                onClick={() => handleEdit(p)}
-                className="bg-yellow-500 text-white px-2"
+                onClick={() => setShowForm(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
               >
-                Edit
+                <IonIcon
+                  icon={closeOutline}
+                  className="text-xl text-gray-500"
+                />
               </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Supplier Name *
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter supplier name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+1 (555) 000-0000"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="supplier@example.com"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="123 Business St, City, State, ZIP"
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm({ ...form, address: e.target.value })
+                  }
+                />
+              </div>
 
               <button
-                onClick={() => handleDelete(p.product_uuid)}
-                className="bg-red-600 text-white px-2"
+                onClick={handleCreate}
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50"
               >
-                Delete
+                {loading ? "Adding..." : "Add Supplier"}
               </button>
             </div>
           </div>
-        ))}
 
-        {products.length === 0 && (
-          <div className="p-4 text-center text-gray-500">
-            No products found
-          </div>
-        )}
+        </div>
+      )}
+
+      {/* Suppliers Table */}
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left p-4 text-sm font-semibold text-gray-600">
+                  Supplier
+                </th>
+                <th className="text-left p-4 text-sm font-semibold text-gray-600">
+                  Contact
+                </th>
+                <th className="text-left p-4 text-sm font-semibold text-gray-600">
+                  Address
+                </th>
+                <th className="text-center p-4 text-sm font-semibold text-gray-600">
+                  Status
+                </th>
+                <th className="text-center p-4 text-sm font-semibold text-gray-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && suppliers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  </td>
+                </tr>
+              ) : filteredSuppliers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center p-8 text-gray-500">
+                    {searchTerm
+                      ? "No suppliers match your search"
+                      : "No suppliers found"}
+                  </td>
+                </tr>
+              ) : (
+                filteredSuppliers.map((s) => (
+                  <tr
+                    key={s.supplier_uuid}
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-all"
+                  >
+                    <td className="p-4">
+                      <div>
+                        <div className="font-medium text-gray-800">
+                          {s.name}
+                        </div>
+                        {s.supplier_uuid && (
+                          <div className="text-xs text-gray-400 mt-0.5 font-mono">
+                            ID: {s.supplier_uuid.slice(0, 8)}...
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="space-y-1">
+                        {s.phone && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <IonIcon icon={callOutline} className="text-xs" />
+                            <span>{s.phone}</span>
+                          </div>
+                        )}
+                        {s.email && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <IonIcon icon={mailOutline} className="text-xs" />
+                            <span className="truncate max-w-[200px]">
+                              {s.email}
+                            </span>
+                          </div>
+                        )}
+                        {!s.phone && !s.email && (
+                          <span className="text-xs text-gray-400">
+                            No contact info
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {s.address ? (
+                        <div className="flex items-start gap-1 text-sm text-gray-600">
+                          <IonIcon
+                            icon={locationOutline}
+                            className="text-xs mt-0.5"
+                          />
+                          <span className="line-clamp-2">{s.address}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          No address
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                        <IonIcon icon={checkmarkCircleOutline} className="text-xs" />
+                        Active
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      {editingId === s.supplier_uuid ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleUpdate(s.supplier_uuid)}
+                            className="px-3 py-1 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-all"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="px-3 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => startEdit(s)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Edit"
+                          >
+                            <IonIcon icon={createOutline} className="text-lg" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(s.supplier_uuid)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Delete"
+                          >
+                            <IonIcon icon={trashOutline} className="text-lg" />
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Inline Edit Modal (for editing in place) */}
+      {editingId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">Edit Supplier</h2>
+              <button
+                onClick={() => setEditingId(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <IonIcon icon={closeOutline} className="text-xl text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Supplier Name
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.name || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.phone || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.email || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  value={editForm.address || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, address: e.target.value })
+                  }
+                />
+              </div>
+
+              <button
+                onClick={() => editingId && handleUpdate(editingId)}
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition-all duration-200 disabled:opacity-50"
+              >
+                {loading ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

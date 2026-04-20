@@ -1,4 +1,5 @@
 export type Product = {
+  category: string | number | undefined;
   product_uuid: string;
   name: string;
   price: number;

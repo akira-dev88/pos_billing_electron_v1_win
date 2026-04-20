@@ -1,6 +1,10 @@
 import { apiGet, apiPost } from "./api";
 
 export interface Sale {
+  customer: any;
+  customer: any;
+  customer: any;
+  customer: any;
   sale_uuid: string;
   invoice_number: string;
   grand_total: string;
@@ -8,12 +12,38 @@ export interface Sale {
 }
 
 export interface InvoiceItem {
+  quantity: number;
+  quantity: number;
+  price(price: any): import("react").ReactNode;
   name: string;
   qty: number;
   total: number;
 }
 
 export interface Invoice {
+  payment_method: boolean;
+  amount: number;
+  gst: number;
+  cart: any;
+  cart: any;
+  customer_name: any;
+  customer_name: any;
+  payments: any;
+  payments: boolean;
+  payments: any;
+  total_amount: number;
+  tax: number;
+  subtotal: number;
+  total: number;
+  created_at: number;
+  sale_uuid: any;
+  grand_total: number;
+  grand_total: number;
+  grand_total: number;
+  customer: any;
+  customer: any;
+  customer: any;
+  customer: any;
   invoice_number?: string;
   shop?: {
     name: string;

@@ -11,12 +11,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ionic/react": "^8.8.4",
     "better-sqlite3": "^12.9.0",
     "electron": "^41.2.0",
+    "ionicons": "^8.0.13",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-is": "^19.2.5",
     "react-router-dom": "^7.14.1",
     "recharts": "^3.8.1",
+    "tailwind-scrollbar-hide": "^4.0.0",
     "uuid": "^13.0.0",
     "zustand": "^5.0.12"
   },

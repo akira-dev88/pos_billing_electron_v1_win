@@ -14,6 +14,7 @@ export default function LoginPage() {
     try {
       const res = await apiPost("/login", { email, password });
 
+      console.log("Login response:", res);
 
       const token =
         res?.token ||
